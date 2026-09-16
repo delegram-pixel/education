@@ -1,0 +1,116 @@
+# Admission Copilot
+
+Admission Copilot is a Next.js application that helps prospective students understand course eligibility, navigate the application journey, and ask admission-related questions with guided support.
+
+It includes:
+- course and subject eligibility checks
+- guided walkthroughs for admission steps
+- student quiz and recommendation flow
+- support ticket flow for unresolved cases
+- a lightweight database-backed data layer with graceful fallback behavior
+
+## Tech stack
+- Next.js 15
+- React 19
+- TypeScript
+- Tailwind CSS
+- Drizzle ORM
+- Neon database support
+- Vitest for tests
+
+## Prerequisites
+Before you begin, make sure you have:
+- Git installed
+- Node.js 20 or newer
+- Yarn installed
+
+## Clone the repository
+Open a terminal and run:
+
+```bash
+git clone <repository-url>
+cd education
+```
+
+If you are cloning from GitHub, it usually looks like this:
+
+```bash
+git clone https://github.com/your-username/education.git
+cd education
+```
+
+## Install dependencies
+From the project root, install the app dependencies:
+
+```bash
+yarn install
+```
+
+## Environment variables
+This project supports local environment configuration through `.env.local`.
+
+Create a `.env.local` file in the project root if you want to provide your own database settings:
+
+```bash
+DATABASE_URL=your_neon_or_postgres_connection_string
+
+# Public Swift Agents widget credentials used by the browser.
+# Replace with your real values from the Swift dashboard.
+NEXT_PUBLIC_SWIFT_COMPANY_ID="your_swift_company_id"
+NEXT_PUBLIC_SWIFT_API_KEY="your_swift_api_key"
+```
+
+Note: the app is designed to work without a database configured as well. If `DATABASE_URL` is missing, it falls back to static data in many flows.
+
+## Run the application in development mode
+Start the app locally:
+
+```bash
+yarn dev
+```
+
+Then open:
+
+```text
+http://localhost:3000
+```
+
+## Production build
+To create a production build:
+
+```bash
+yarn build
+```
+
+To run the production server:
+
+```bash
+yarn start
+```
+
+## Useful project scripts
+
+```bash
+yarn lint
+yarn typecheck
+yarn test
+yarn db:push
+yarn db:studio
+yarn db:seed
+```
+
+## Project structure
+- `app/` — Next.js routes and application pages
+- `components/` — reusable UI and feature components
+- `lib/` — core logic, scoring, database helpers, and validation
+- `drizzle.config.ts` — Drizzle configuration
+- `vitest.config.ts` — test configuration
+
+## Troubleshooting
+- If dependencies are not installed, run `yarn install` again.
+- If the app does not start, make sure you are using a supported Node.js version.
+- If you are using a database, confirm your `DATABASE_URL` is valid.
+- For local script support, keep environment variables in `.env.local` rather than exporting them in the shell only.
+
+## License
+This project does not currently define a license in the repository. If needed, add one before distributing or publishing the code.

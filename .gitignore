@@ -32,6 +32,6 @@ coverage/
 *.md
 
 # Keep project docs if you want them tracked
-# !README.md
+!README.md
 # !BUILD_PROMPT.md
 # !prd.md
