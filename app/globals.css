@@ -1,0 +1,418 @@
+@import 'tailwindcss';
+
+/* Runtime theme switching: explicit choice wins, system preference is the default. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/* ------------------------------------------------------------------ *
+ * Tokens                                                              *
+ * Light is the source of truth. Dark redefines the same names only.   *
+ * Nothing in this file gets its ONLY definition inside a dark block.  *
+ * ------------------------------------------------------------------ */
+
+:root {
+  color-scheme: light;
+
+  /* Surfaces — warm off-white. Never pure #fff on the page ground. */
+  --background: #fdfbf7;
+  --surface: #ffffff;
+  --surface-sunken: #f6f2ea;
+  --border: #e8e1d5;
+  --border-strong: #d6ccba;
+
+  /* Text */
+  --foreground: #1c1917;
+  --muted-foreground: #6b6259;
+
+  /* Primary — teal. Calm and credible, not corporate blue. */
+  --primary: #0f766e;
+  --primary-hover: #115e59;
+  --primary-foreground: #ffffff;
+  --primary-subtle: #eaf5f3;
+
+  /* Accent — amber. Encouragement, progress, "you're doing fine". */
+  --accent: #d97706;
+  --accent-subtle: #fef3e2;
+
+  /* Status */
+  --success: #15803d;
+  --success-subtle: #edf7ee;
+  --warning: #b45309;
+  --warning-subtle: #fef3e2;
+  --danger: #b91c1c;
+  --danger-subtle: #fdecec;
+
+  --ring: #0f766e;
+
+  /* One shadow definition. There is not a second one. */
+  --shadow-card: 0 1px 2px rgb(28 25 23 / 0.04), 0 4px 16px rgb(28 25 23 / 0.04);
+  --shadow-lifted: 0 2px 4px rgb(28 25 23 / 0.05), 0 12px 32px rgb(28 25 23 / 0.08);
+}
+
+:root:not([data-theme='light']) {
+  @media (prefers-color-scheme: dark) {
+    color-scheme: dark;
+    --background: #1a1816;
+    --surface: #221f1c;
+    --surface-sunken: #14120f;
+    --border: #35302a;
+    --border-strong: #4a443b;
+    --foreground: #f5f1ea;
+    --muted-foreground: #a69c8f;
+    --primary: #2dd4bf;
+    --primary-hover: #5eead4;
+    --primary-foreground: #14332f;
+    --primary-subtle: #14312d;
+    --accent: #fbbf24;
+    --accent-subtle: #38290f;
+    --success: #4ade80;
+    --success-subtle: #14301f;
+    --warning: #fbbf24;
+    --warning-subtle: #38290f;
+    --danger: #f87171;
+    --danger-subtle: #3a1a1a;
+    --ring: #2dd4bf;
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.24);
+    --shadow-lifted: 0 2px 4px rgb(0 0 0 / 0.36), 0 12px 32px rgb(0 0 0 / 0.4);
+  }
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --background: #1a1816;
+  --surface: #221f1c;
+  --surface-sunken: #14120f;
+  --border: #35302a;
+  --border-strong: #4a443b;
+  --foreground: #f5f1ea;
+  --muted-foreground: #a69c8f;
+  --primary: #2dd4bf;
+  --primary-hover: #5eead4;
+  --primary-foreground: #14332f;
+  --primary-subtle: #14312d;
+  --accent: #fbbf24;
+  --accent-subtle: #38290f;
+  --success: #4ade80;
+  --success-subtle: #14301f;
+  --warning: #fbbf24;
+  --warning-subtle: #38290f;
+  --danger: #f87171;
+  --danger-subtle: #3a1a1a;
+  --ring: #2dd4bf;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.24);
+  --shadow-lifted: 0 2px 4px rgb(0 0 0 / 0.36), 0 12px 32px rgb(0 0 0 / 0.4);
+}
+
+/* `inline` so utilities resolve the var at runtime and the theme can swap live. */
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-sunken: var(--surface-sunken);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-fg: var(--primary-foreground);
+  --color-primary-subtle: var(--primary-subtle);
+  --color-accent: var(--accent);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-success: var(--success);
+  --color-success-subtle: var(--success-subtle);
+  --color-warning: var(--warning);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-danger: var(--danger);
+  --color-danger-subtle: var(--danger-subtle);
+  --color-ring: var(--ring);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-jakarta), var(--font-inter), ui-sans-serif, sans-serif;
+
+  /* Four radii. Not five. */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+
+  /* Expressive easings — the motion vocabulary for the whole app. */
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+/* ------------------------------------------------------------------ *
+ * Base                                                                *
+ * ------------------------------------------------------------------ */
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Paper grain. 2% opacity over a warm ground — reads as texture, not noise.
+     Generated, not an asset, so it costs nothing to ship. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.022;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 650;
+    letter-spacing: -0.021em;
+    line-height: 1.15;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Visible, consistent, never removed. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+  }
+
+  /* Numeric columns (grades, scores, credit tallies) must not jitter. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Motion vocabulary                                                   *
+ * ------------------------------------------------------------------ */
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes settle {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Requirement rows check off one after another, not all at once. */
+@keyframes stamp {
+  0% {
+    opacity: 0;
+    transform: scale(0.4) rotate(-12deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.12) rotate(3deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+
+/* The spotlight ring on walkthrough hotspots. */
+@keyframes halo {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 14px color-mix(in srgb, var(--accent) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent);
+  }
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes shimmer {
+  to {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes caret {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Directional entrances for stepped content (walkthrough steps, quiz
+   questions). Only the incoming panel is animated: with `mode: wait` semantics
+   the outgoing one has already gone, and animating it too bought a ~37 kB
+   animation library for a difference nobody could see. */
+
+@keyframes enter-from-right {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+}
+
+@keyframes enter-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+}
+
+@keyframes enter-from-below {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+@keyframes enter-from-above {
+  from {
+    opacity: 0;
+    transform: translateY(-24px);
+  }
+}
+
+@layer utilities {
+  /* Index-driven stagger. Set --i on children; no JS timers anywhere. */
+  .stagger > * {
+    animation: rise 0.55s var(--ease-out-quint) backwards;
+    animation-delay: calc(var(--i, 0) * 60ms);
+  }
+
+  .animate-settle {
+    animation: settle 0.5s var(--ease-out-quint) backwards;
+  }
+  .animate-stamp {
+    animation: stamp 0.44s var(--ease-spring) backwards;
+  }
+  .animate-halo {
+    animation: halo 2.1s ease-out infinite;
+  }
+  .animate-caret {
+    animation: caret 1.06s steps(1) infinite;
+  }
+
+  .enter-right {
+    animation: enter-from-right 0.34s var(--ease-out-quint) backwards;
+  }
+  .enter-left {
+    animation: enter-from-left 0.34s var(--ease-out-quint) backwards;
+  }
+  .enter-below {
+    animation: enter-from-below 0.3s var(--ease-out-quint) backwards;
+  }
+  .enter-above {
+    animation: enter-from-above 0.3s var(--ease-out-quint) backwards;
+  }
+
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--surface-sunken) 0%,
+      color-mix(in srgb, var(--surface-sunken) 55%, var(--surface)) 50%,
+      var(--surface-sunken) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s linear infinite;
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  .shadow-lifted {
+    box-shadow: var(--shadow-lifted);
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Cross-route shared-element transitions                              *
+ * A picked course card morphs into the header of the page it opens.   *
+ * ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-group(*) {
+    animation-duration: 0.42s;
+    animation-timing-function: var(--ease-out-quint);
+  }
+
+  ::view-transition-old(root) {
+    animation: none;
+    opacity: 1;
+  }
+
+  ::view-transition-new(root) {
+    animation: rise 0.42s var(--ease-out-quint);
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Reduced motion — one authoritative override                         *
+ * ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
