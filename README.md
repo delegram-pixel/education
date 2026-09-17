@@ -97,7 +97,30 @@ yarn test
 yarn db:push
 yarn db:studio
 yarn db:seed
+yarn catalogue:sync
 ```
+
+## Nigeria-wide catalogue for Swift Agents
+
+The app keeps two catalogue layers separate:
+
+- `courses` contains reviewed courses that can produce an in-app eligibility verdict.
+- the JAMB IBASS mirror contains the full discovery catalogue for Swift and must never be presented as a guaranteed eligibility decision.
+
+To import the official JAMB IBASS institution and programme catalogue, run:
+
+```bash
+yarn catalogue:prepare
+yarn catalogue:sync
+```
+
+Run the sync on a scheduled server job to keep the mirror fresh. Once deployed, add this URL as a **website knowledge source** in the Swift Agents dashboard:
+
+```text
+https://your-domain.example/api/swift/knowledge
+```
+
+The endpoint is plain Markdown, includes the source link for every programme, and labels the fallback sample data if the national catalogue has not been imported. JAMB identifies IBASS as the official e-brochure and eligibility source; students should still verify the current session in IBASS and the institution's own bulletin.
 
 ## Project structure
 - `app/` — Next.js routes and application pages

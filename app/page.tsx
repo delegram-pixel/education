@@ -5,7 +5,6 @@ import { ResultSlip } from '@/components/home/result-slip'
 import { Reveal } from '@/components/shared/reveal'
 import { Badge } from '@/components/ui/badge'
 import { Arrow, Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { listCourses } from '@/lib/db/queries'
 
 const STEPS = [
@@ -109,26 +108,49 @@ export default async function HomePage() {
       </section>
 
       {/* ---------------------------------------------------------------- */}
-      {/* How it works                                                     */}
+      {/* The admissions path                                              */}
       {/* ---------------------------------------------------------------- */}
       <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-        <Reveal>
-          <h2 className="text-[1.875rem] sm:text-[2.25rem]">Three things, in order</h2>
-          <p className="mt-3 max-w-2xl text-muted">
-            You can stop after any one of them. Most students only need the first.
+        <Reveal className="grid gap-5 border-b border-border pb-8 md:grid-cols-[0.72fr_1fr] md:items-end">
+          <div>
+            <span className="text-[0.75rem] font-semibold uppercase tracking-[0.16em] text-primary">
+              Your admissions path
+            </span>
+            <h2 className="mt-3 text-[1.875rem] sm:text-[2.25rem]">Start where you are.</h2>
+          </div>
+          <p className="max-w-xl text-[1rem] leading-relaxed text-muted md:justify-self-end">
+            One clear next step at a time — check your subjects first, then use the guide or ask
+            for help only if you need it.
           </p>
         </Reveal>
 
-        <ol className="mt-10 grid gap-5 md:grid-cols-3">
+        <ol className="divide-y divide-border">
           {STEPS.map((step, i) => (
             <Reveal as="li" key={step.title} delay={i * 90}>
-              <Card className="h-full p-6" interactive>
-                <div className="flex size-11 items-center justify-center rounded-md bg-[var(--color-primary-dark)] text-[var(--color-accent-light)] shadow-sm">
-                  <step.icon aria-hidden className="size-5" />
+              <div className="grid gap-4 py-7 sm:grid-cols-[3.5rem_1fr_auto] sm:items-center sm:gap-6 sm:py-8">
+                <div className="flex items-center gap-3 sm:block">
+                  <span className="font-display text-[2rem] leading-none text-primary sm:text-[2.5rem]">
+                    0{i + 1}
+                  </span>
+                  <span className="flex size-9 items-center justify-center rounded-full bg-primary-subtle text-primary sm:mt-3">
+                    <step.icon aria-hidden className="size-4" />
+                  </span>
                 </div>
-                <h3 className="mt-5 text-[1.1875rem]">{step.title}</h3>
-                <p className="mt-2 text-[0.9375rem] leading-relaxed text-muted">{step.body}</p>
-              </Card>
+                <div className="max-w-2xl">
+                  <h3 className="text-[1.1875rem]">{step.title}</h3>
+                  <p className="mt-1.5 text-[0.9375rem] leading-relaxed text-muted">{step.body}</p>
+                </div>
+                {i === 0 ? (
+                  <Button asChild variant="secondary" size="sm" className="justify-self-start sm:justify-self-end">
+                    <Link href="/check">
+                      Start now
+                      <Arrow />
+                    </Link>
+                  </Button>
+                ) : (
+                  <span className="hidden text-[0.8125rem] font-medium text-muted sm:block">When you need it</span>
+                )}
+              </div>
             </Reveal>
           ))}
         </ol>
@@ -153,35 +175,46 @@ export default async function HomePage() {
           </Button>
         </Reveal>
 
-        <ul className="mt-8 grid gap-5 md:grid-cols-3">
+        <ul className="mt-8 overflow-hidden rounded-xl border border-border bg-surface shadow-card">
           {courses.map((course, i) => (
-            <Reveal as="li" key={course.id} delay={i * 90}>
-              <Link href={`/check?course=${course.id}`} className="group block h-full rounded-lg">
-                <Card className="flex h-full flex-col p-6" interactive>
-                  <span className="text-[0.8125rem] font-medium uppercase tracking-wide text-muted">
+            <Reveal
+              as="li"
+              key={course.id}
+              delay={i * 90}
+              className="border-b border-border last:border-b-0"
+            >
+              <Link
+                href={`/check?course=${course.id}`}
+                className="group grid gap-3 p-5 transition-colors duration-200 hover:bg-primary-subtle/45 sm:grid-cols-[4.5rem_1fr_auto] sm:items-center sm:gap-6 sm:p-6"
+              >
+                <div className="flex items-center gap-3 sm:block">
+                  <span className="font-display text-[1.75rem] leading-none text-primary sm:text-[2.25rem]">
+                    0{i + 1}
+                  </span>
+                  <span className="mt-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-muted">
                     {course.institutionShort}
                   </span>
+                </div>
+                <div>
                   <h3
-                    className="mt-1.5 text-[1.25rem]"
+                    className="text-[1.25rem] transition-colors group-hover:text-primary"
                     // Morphs into the heading of the page it opens, where the
                     // browser supports it. Purely additive.
                     style={{ viewTransitionName: `course-${course.id}` }}
                   >
                     {course.name}
                   </h3>
-                  <p className="mt-2.5 flex-1 text-[0.9375rem] leading-relaxed text-muted">
+                  <p className="mt-1.5 max-w-2xl text-[0.9375rem] leading-relaxed text-muted">
                     {course.blurb}
                   </p>
-                  <div className="mt-5 flex items-center justify-between border-t border-border pt-4">
-                    <span className="text-[0.875rem] text-muted">
-                      {course.durationYears} years
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 text-[0.875rem] font-medium text-primary">
-                      Check my results
-                      <Arrow className="size-4" />
-                    </span>
-                  </div>
-                </Card>
+                </div>
+                <div className="flex items-center justify-between gap-5 border-t border-border pt-3 sm:block sm:border-0 sm:pt-0 sm:text-right">
+                  <span className="block text-[0.8125rem] text-muted">{course.durationYears} years</span>
+                  <span className="mt-1.5 inline-flex items-center gap-1.5 text-[0.875rem] font-medium text-primary">
+                    Check results
+                    <Arrow className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+                  </span>
+                </div>
               </Link>
             </Reveal>
           ))}
