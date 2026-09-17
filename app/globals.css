@@ -72,6 +72,9 @@
 :root:not([data-theme='light']) {
   @media (prefers-color-scheme: dark) {
     color-scheme: dark;
+    --text-primary: #F5F5F0;
+    --text-secondary: #A8A89A;
+    --text-muted: #8F8F82;
     --background: #141406;
     --surface: #1E1E0E;
     --surface-sunken: #101004;
@@ -102,6 +105,9 @@
 
 [data-theme='dark'] {
   color-scheme: dark;
+  --text-primary: #F5F5F0;
+  --text-secondary: #A8A89A;
+  --text-muted: #8F8F82;
   --background: #141406;
   --surface: #1E1E0E;
   --surface-sunken: #101004;
@@ -153,6 +159,7 @@
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-accent-subtle: var(--accent-subtle);
+  --color-accent-fg: var(--accent-foreground);
   --color-success: var(--success);
   --color-success-subtle: var(--success-subtle);
   --color-warning: var(--warning);

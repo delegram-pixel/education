@@ -23,13 +23,13 @@ const button = cva(
     variants: {
       variant: {
         primary:
-          'bg-[var(--color-primary-dark)] text-white hover:bg-[var(--color-soft-black)] shadow-card',
+          'bg-primary text-primary-fg hover:bg-primary-hover shadow-card',
         secondary:
-          'bg-[var(--color-accent-light)] text-[var(--color-primary-dark)] hover:bg-[#FFFFB3] border border-transparent shadow-card font-semibold',
+          'bg-accent text-accent-fg hover:bg-accent-hover border border-transparent shadow-card font-semibold',
         ghost:
-          'bg-transparent text-[var(--color-primary-dark)] border-2 border-[var(--color-light-gray)] hover:bg-[var(--color-primary-dark)]/[0.06] before:hidden',
+          'bg-transparent text-foreground border-2 border-border hover:bg-primary-subtle before:hidden',
         subtle:
-          'bg-[var(--color-accent-light)]/40 text-[var(--color-primary-dark)] hover:bg-[var(--color-accent-light)]',
+          'bg-accent-subtle text-foreground hover:bg-accent',
         danger: 'bg-danger-subtle text-danger hover:bg-danger hover:text-white',
       },
       size: {

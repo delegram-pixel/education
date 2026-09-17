@@ -186,13 +186,13 @@ export function Stepper({ walkthrough }: { walkthrough: Walkthrough }) {
           ) : null}
 
           {step.tip ? (
-            <div className="mt-5 flex gap-3 rounded-md border border-[var(--color-primary-dark)]/15 bg-[var(--color-accent-light)]/40 p-4">
-              <Lightbulb aria-hidden className="mt-0.5 size-4 shrink-0 text-[var(--color-primary-dark)]" />
+            <div className="mt-5 flex gap-3 rounded-md border border-primary/15 bg-accent-subtle p-4">
+              <Lightbulb aria-hidden className="mt-0.5 size-4 shrink-0 text-foreground" />
               <div>
-                <p className="text-[0.875rem] font-bold text-[var(--color-primary-dark)]">
+                <p className="text-[0.875rem] font-bold text-foreground">
                   Most people get stuck here
                 </p>
-                <p className="mt-1 text-[0.9375rem] leading-relaxed text-[var(--color-primary-dark)]">
+                <p className="mt-1 text-[0.9375rem] leading-relaxed text-foreground">
                   {step.tip}
                 </p>
               </div>

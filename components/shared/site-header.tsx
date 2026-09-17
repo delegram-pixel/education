@@ -12,7 +12,7 @@ const NAV = [
   { href: '/check', label: 'Check eligibility' },
   { href: '/guide', label: 'Registration guides' },
   { href: '/quiz', label: 'Course fit' },
-  { href: '/design-system', label: 'Color System Guide' },
+  // { href: '/design-system', label: 'Color System Guide' },
 ]
 
 export function SiteHeader() {
@@ -60,8 +60,8 @@ export function SiteHeader() {
                 aria-current={active ? 'page' : undefined}
                 className={cn(
                   'relative rounded-md px-3.5 py-2 text-[0.9375rem] font-medium transition-colors duration-200',
-                  'hover:bg-[#FFFFC0]/[0.08]',
-                  active ? 'text-[var(--color-primary-dark)]' : 'text-[var(--color-warm-gray)] hover:text-[var(--color-primary-dark)]',
+                  'hover:bg-accent-subtle',
+                  active ? 'text-foreground' : 'text-muted hover:text-foreground',
                 )}
               >
                 {item.label}
@@ -85,9 +85,9 @@ export function SiteHeader() {
             type="button"
             onClick={handleAsk}
             className={cn(
-              'open-chat h-10 rounded-md border border-[var(--color-light-gray)] bg-surface px-4',
+              'open-chat h-10 rounded-md border border-border bg-surface px-4',
               'text-[0.9375rem] font-medium transition-colors duration-200',
-              'hover:border-[var(--color-primary-dark)] hover:bg-[var(--color-accent-light)] hover:text-[var(--color-primary-dark)]',
+              'hover:border-primary hover:bg-accent hover:text-primary-fg',
             )}
             aria-label="Ask a counselor or open the chat widget"
           >
@@ -111,8 +111,8 @@ export function SiteHeader() {
               className={cn(
                 'shrink-0 rounded-md px-3 py-1.5 text-[0.875rem] font-medium transition-colors',
                 active
-                  ? 'bg-[var(--color-primary-dark)] text-[var(--color-accent-light)]'
-                  : 'text-[var(--color-warm-gray)] hover:text-[var(--color-primary-dark)] hover:bg-[#FFFFC0]/[0.08]',
+                    ? 'bg-primary text-primary-fg'
+                    : 'text-muted hover:text-foreground hover:bg-accent-subtle',
               )}
             >
               {item.label}

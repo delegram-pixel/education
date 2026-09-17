@@ -85,13 +85,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 ? '-translate-x-4 scale-[0.97] opacity-0'
                 : 'animate-settle translate-x-0 scale-100 opacity-100',
               toast.tone === 'success' &&
-                'border-success/30 bg-success-subtle text-[var(--color-primary-dark)]',
+                'border-success/30 bg-success-subtle text-foreground',
               toast.tone === 'warning' &&
-                'border-warning/30 bg-warning-subtle text-[var(--color-primary-dark)]',
+                'border-warning/30 bg-warning-subtle text-foreground',
               toast.tone === 'danger' &&
-                'border-danger/30 bg-danger-subtle text-[var(--color-primary-dark)]',
+                'border-danger/30 bg-danger-subtle text-foreground',
               toast.tone === 'neutral' &&
-                'border-[var(--color-light-gray)] bg-surface text-[var(--color-primary-dark)]',
+                'border-border bg-surface text-foreground',
             )}
           >
             {toast.message}
