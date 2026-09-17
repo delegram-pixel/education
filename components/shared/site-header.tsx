@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import * as React from 'react'
 
 import { ThemeToggle } from '@/components/shared/theme-toggle'
@@ -17,6 +17,7 @@ const NAV = [
 
 export function SiteHeader() {
   const pathname = usePathname()
+  const router = useRouter()
   const [lifted, setLifted] = React.useState(false)
 
   React.useEffect(() => {
@@ -25,6 +26,15 @@ export function SiteHeader() {
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  function handleAsk() {
+    if (typeof window !== 'undefined' && window.SwiftAgentWidget?.open) {
+      window.SwiftAgentWidget.open()
+      return
+    }
+
+    router.push('/tickets/new')
+  }
 
   return (
     <header
@@ -73,12 +83,13 @@ export function SiteHeader() {
           <ThemeToggle />
           <button
             type="button"
-            // `.open-chat` is bound by the Swift script's delegated listener.
+            onClick={handleAsk}
             className={cn(
               'open-chat h-10 rounded-md border border-[var(--color-light-gray)] bg-surface px-4',
               'text-[0.9375rem] font-medium transition-colors duration-200',
               'hover:border-[var(--color-primary-dark)] hover:bg-[var(--color-accent-light)] hover:text-[var(--color-primary-dark)]',
             )}
+            aria-label="Ask a counselor or open the chat widget"
           >
             Ask
           </button>
