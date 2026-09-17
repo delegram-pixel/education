@@ -25,14 +25,20 @@ import Script from 'next/script'
 export function SwiftAgentScript() {
   const companyId = process.env.NEXT_PUBLIC_SWIFT_COMPANY_ID
   const apiKey = process.env.NEXT_PUBLIC_SWIFT_API_KEY
+  const hasRealCredentials =
+    companyId &&
+    apiKey &&
+    !companyId.startsWith('your_') &&
+    !apiKey.startsWith('your_')
 
-  if (!companyId || !apiKey) return null
+  if (!hasRealCredentials) return null
 
   return (
     <Script
       src="https://widget.swiftagents.org/dist/widget-ui.js"
       data-company-id={companyId}
       data-api-key={apiKey}
+      data-mode="widget"
       data-trigger=".open-chat"
       strategy="afterInteractive"
     />

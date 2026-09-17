@@ -1,9 +1,9 @@
 'use client'
 
 import { RotateCcw } from 'lucide-react'
-import Link from 'next/link'
 import * as React from 'react'
 
+import { AskCopilotButton } from '@/components/swift/ask-copilot-button'
 import { Button } from '@/components/ui/button'
 
 export default function GlobalError({
@@ -29,9 +29,10 @@ export default function GlobalError({
           <RotateCcw aria-hidden className="size-4" />
           Try again
         </Button>
-        <Button asChild variant="secondary">
-          <Link href="/tickets/new">Ask a counselor instead</Link>
-        </Button>
+        <AskCopilotButton
+          suggestedQuestion="The application showed an error while I was trying to complete an admission task. Can you help me continue?"
+          label="Ask a counselor instead"
+        />
       </div>
       {error.digest ? (
         <p className="mt-6 text-[0.8125rem] text-muted">Reference: {error.digest}</p>

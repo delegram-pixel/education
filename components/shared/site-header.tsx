@@ -6,6 +6,7 @@ import * as React from 'react'
 
 import { ThemeToggle } from '@/components/shared/theme-toggle'
 import { Wordmark } from '@/components/shared/wordmark'
+import { AskCopilotButton } from '@/components/swift/ask-copilot-button'
 import { cn } from '@/lib/utils'
 
 const NAV = [
@@ -17,7 +18,6 @@ const NAV = [
 
 export function SiteHeader() {
   const pathname = usePathname()
-  const router = useRouter()
   const [lifted, setLifted] = React.useState(false)
 
   React.useEffect(() => {
@@ -26,15 +26,6 @@ export function SiteHeader() {
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
-
-  function handleAsk() {
-    if (typeof window !== 'undefined' && window.SwiftAgentWidget?.open) {
-      window.SwiftAgentWidget.open()
-      return
-    }
-
-    router.push('/tickets/new')
-  }
 
   return (
     <header
@@ -81,18 +72,12 @@ export function SiteHeader() {
 
         <div className="ml-auto flex items-center gap-2 md:ml-0">
           <ThemeToggle />
-          <button
-            type="button"
-            onClick={handleAsk}
-            className={cn(
-              'open-chat h-10 rounded-md border border-border bg-surface px-4',
-              'text-[0.9375rem] font-medium transition-colors duration-200',
-              'hover:border-primary hover:bg-accent hover:text-primary-fg',
-            )}
-            aria-label="Ask a counselor or open the chat widget"
-          >
-            Ask
-          </button>
+          <AskCopilotButton
+            suggestedQuestion="I have a question about my admission process. What should I do next?"
+            label="Ask"
+            size="sm"
+            className="open-chat h-10 border-border bg-surface px-4 text-[0.9375rem] hover:border-primary hover:bg-accent hover:text-accent-fg"
+          />
         </div>
       </div>
 
