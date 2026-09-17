@@ -18,10 +18,11 @@ export const SelectTrigger = React.forwardRef<
     ref={ref}
     className={cn(
       'group flex h-11 w-full items-center justify-between gap-2 rounded-md',
-      'border border-border-strong bg-surface px-3.5 text-left text-[1.0625rem]',
+      'border border-[var(--color-light-gray)] bg-surface px-3.5 text-left text-[1.0625rem]',
       'transition-[border-color,box-shadow] duration-200',
-      'hover:border-primary data-[state=open]:border-primary',
-      'data-[state=open]:ring-2 data-[state=open]:ring-primary/20',
+      'hover:border-[var(--color-primary-dark)]',
+      'focus:outline-2 focus:outline-[var(--color-primary-dark)] focus:ring-2 focus:ring-[var(--color-accent-light)]',
+      'data-[state=open]:border-[var(--color-primary-dark)] data-[state=open]:ring-2 data-[state=open]:ring-[var(--color-accent-light)]',
       'data-[placeholder]:text-muted disabled:opacity-50',
       className,
     )}
@@ -72,7 +73,7 @@ export const SelectItem = React.forwardRef<
       'relative flex cursor-pointer select-none items-center justify-between gap-3',
       'rounded-sm py-2 pl-3 pr-2.5 text-[1rem] outline-none',
       'transition-colors duration-150',
-      'data-[highlighted]:bg-primary-subtle data-[highlighted]:text-primary',
+      'data-[highlighted]:bg-[var(--color-accent-light)] data-[highlighted]:text-[var(--color-primary-dark)]',
       'data-[disabled]:pointer-events-none data-[disabled]:opacity-40',
       className,
     )}
@@ -82,7 +83,7 @@ export const SelectItem = React.forwardRef<
     <span className="flex items-center gap-2">
       {hint ? <span className="text-[0.8125rem] text-muted">{hint}</span> : null}
       <SelectPrimitive.ItemIndicator>
-        <Check aria-hidden className="size-4 text-primary" />
+        <Check aria-hidden className="size-4 text-[var(--color-primary-dark)]" />
       </SelectPrimitive.ItemIndicator>
     </span>
   </SelectPrimitive.Item>

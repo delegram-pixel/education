@@ -74,7 +74,7 @@ export default async function CheckPage({
           <Reveal as="li" key={c.id} delay={i * 80}>
             <Link href={`/check?course=${c.id}`} className="group block h-full rounded-lg">
               <Card className="flex h-full flex-col p-6" interactive>
-                <div className="flex size-10 items-center justify-center rounded-md bg-primary-subtle text-primary">
+                <div className="flex size-10 items-center justify-center rounded-md bg-[var(--color-primary-dark)] text-[var(--color-accent-light)] shadow-sm">
                   <GraduationCap aria-hidden className="size-5" />
                 </div>
                 <span className="mt-5 text-[0.8125rem] font-medium uppercase tracking-wide text-muted">

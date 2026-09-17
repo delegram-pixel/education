@@ -301,7 +301,7 @@ export function OLevelForm({
         <Button type="submit" size="lg" disabled={pending} className="group">
           {pending ? (
             <>
-              <Loader2 aria-hidden className="size-4 animate-spin" />
+              <Loader2 aria-hidden className="size-4 animate-spin text-[var(--color-accent-light)]" />
               Checking
             </>
           ) : (

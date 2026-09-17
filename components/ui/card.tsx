@@ -10,10 +10,11 @@ export function Card({
   return (
     <div
       className={cn(
-        'rounded-lg border border-border bg-surface shadow-card',
+        'relative rounded-lg border border-[var(--color-light-gray)] bg-surface shadow-card overflow-hidden',
         interactive && [
           'transition-[transform,box-shadow,border-color] duration-300 ease-[var(--ease-out-quint)]',
           'hover:-translate-y-1 hover:shadow-lifted hover:border-border-strong',
+          'after:pointer-events-none after:absolute after:inset-0 after:bg-[var(--color-primary-dark)] after:opacity-0 after:transition-opacity after:duration-200 hover:after:opacity-[0.04]',
           'motion-reduce:hover:translate-y-0',
         ],
         className,

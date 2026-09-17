@@ -12,6 +12,7 @@ const NAV = [
   { href: '/check', label: 'Check eligibility' },
   { href: '/guide', label: 'Registration guides' },
   { href: '/quiz', label: 'Course fit' },
+  { href: '/design-system', label: 'Color System Guide' },
 ]
 
 export function SiteHeader() {
@@ -40,7 +41,7 @@ export function SiteHeader() {
       className={cn(
         'sticky top-0 z-40 border-b transition-[background-color,border-color,backdrop-filter] duration-300',
         lifted
-          ? 'border-border bg-background/80 backdrop-blur-md'
+          ? 'border-border bg-background/85 backdrop-blur-md'
           : 'border-transparent bg-transparent',
       )}
     >
@@ -51,23 +52,24 @@ export function SiteHeader() {
 
         <nav className="ml-auto hidden items-center gap-1 md:flex" aria-label="Main">
           {NAV.map((item) => {
-            const active = pathname.startsWith(item.href)
+            const active = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'relative rounded-md px-3 py-2 text-[0.9375rem] transition-colors duration-200',
-                  active ? 'text-foreground' : 'text-muted hover:text-foreground',
+                  'relative rounded-md px-3.5 py-2 text-[0.9375rem] font-medium transition-colors duration-200',
+                  'hover:bg-[#FFFFC0]/[0.08]',
+                  active ? 'text-[var(--color-primary-dark)]' : 'text-[var(--color-warm-gray)] hover:text-[var(--color-primary-dark)]',
                 )}
               >
                 {item.label}
-                {/* Underline grows from the centre rather than fading in. */}
+                {/* Active tab underline in Fresh Green #FFFFC0 per Guide Page 3 & 5 */}
                 <span
                   aria-hidden
                   className={cn(
-                    'absolute inset-x-3 bottom-1 h-px origin-center bg-primary',
+                    'absolute inset-x-3 bottom-0.5 h-[2px] origin-center rounded-full bg-[var(--color-accent-light)]',
                     'transition-transform duration-300 ease-[var(--ease-out-quint)]',
                     active ? 'scale-x-100' : 'scale-x-0',
                   )}
@@ -83,9 +85,9 @@ export function SiteHeader() {
             type="button"
             onClick={handleAsk}
             className={cn(
-              'open-chat h-10 rounded-md border border-border-strong bg-surface px-4',
+              'open-chat h-10 rounded-md border border-[var(--color-light-gray)] bg-surface px-4',
               'text-[0.9375rem] font-medium transition-colors duration-200',
-              'hover:border-primary hover:text-primary',
+              'hover:border-[var(--color-primary-dark)] hover:bg-[var(--color-accent-light)] hover:text-[var(--color-primary-dark)]',
             )}
             aria-label="Ask a counselor or open the chat widget"
           >
@@ -100,15 +102,17 @@ export function SiteHeader() {
         aria-label="Main"
       >
         {NAV.map((item) => {
-          const active = pathname.startsWith(item.href)
+          const active = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
           return (
             <Link
               key={item.href}
               href={item.href}
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'shrink-0 rounded-sm px-3 py-1.5 text-[0.875rem] transition-colors',
-                active ? 'bg-primary-subtle text-primary' : 'text-muted',
+                'shrink-0 rounded-md px-3 py-1.5 text-[0.875rem] font-medium transition-colors',
+                active
+                  ? 'bg-[var(--color-primary-dark)] text-[var(--color-accent-light)]'
+                  : 'text-[var(--color-warm-gray)] hover:text-[var(--color-primary-dark)] hover:bg-[#FFFFC0]/[0.08]',
               )}
             >
               {item.label}

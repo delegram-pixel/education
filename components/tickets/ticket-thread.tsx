@@ -216,7 +216,7 @@ export function TicketThread({
 function Avatar({ author, name }: { author: Message['author']; name: string | null }) {
   if (author === 'counselor') {
     return (
-      <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent-subtle text-[0.8125rem] font-semibold text-accent ring-2 ring-accent/20">
+      <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[var(--color-accent-light)] text-[0.8125rem] font-bold text-[var(--color-primary-dark)] ring-2 ring-[var(--color-primary-dark)]/20 shadow-sm">
         {(name ?? 'DC')
           .split(' ')
           .map((w) => w[0])
@@ -229,14 +229,14 @@ function Avatar({ author, name }: { author: Message['author']; name: string | nu
 
   if (author === 'student') {
     return (
-      <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary text-primary-fg">
+      <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[var(--color-primary-dark)] text-[var(--color-accent-light)] shadow-sm">
         <User aria-hidden className="size-4" />
       </span>
     )
   }
 
   return (
-    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary-subtle text-primary">
+    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[var(--color-primary-dark)] text-[var(--color-accent-light)] shadow-sm">
       <Check aria-hidden className="size-4" />
     </span>
   )

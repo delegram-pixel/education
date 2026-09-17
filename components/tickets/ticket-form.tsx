@@ -11,10 +11,10 @@ import { TICKET_CATEGORIES, TICKET_CATEGORY_LABELS, type TicketCategory } from '
 import { cn } from '@/lib/utils'
 
 const fieldClasses = cn(
-  'w-full rounded-md border border-border-strong bg-surface px-3.5 py-2.5 text-[1.0625rem]',
+  'w-full rounded-md border border-[var(--color-light-gray)] bg-surface px-3.5 py-2.5 text-[1.0625rem]',
   'transition-[border-color,box-shadow] duration-200',
-  'placeholder:text-muted/70 hover:border-primary',
-  'focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20',
+  'placeholder:text-muted/70 hover:border-[var(--color-primary-dark)]',
+  'focus:border-[var(--color-primary-dark)] focus:outline-2 focus:outline-[var(--color-primary-dark)] focus:ring-2 focus:ring-[var(--color-accent-light)]',
 )
 
 export function TicketForm({
@@ -94,7 +94,7 @@ export function TicketForm({
       <Button type="submit" size="lg" disabled={pending} className="group">
         {pending ? (
           <>
-            <Loader2 aria-hidden className="size-4 animate-spin" />
+            <Loader2 aria-hidden className="size-4 animate-spin text-[var(--color-accent-light)]" />
             Sending
           </>
         ) : (

@@ -10,30 +10,49 @@
  * ------------------------------------------------------------------ */
 
 :root {
+  /* Core CSS Variables from Color System Design Guide (v1.0, September 2026) */
+  --color-primary-dark: #1A1A00;
+  --color-accent-light: #FFFFC0;
+  --color-soft-black: #2D2D2D;
+  --color-cream: #F5F5F0;
+  --color-light-gray: #E8E8E0;
+  --color-warm-gray: #66666B;
+  --color-white: #FFFFFF;
+
+  --bg-page: var(--color-cream);
+  --bg-card: var(--color-white);
+  --text-primary: var(--color-primary-dark);
+  --text-secondary: var(--color-warm-gray);
+  --text-muted: var(--color-light-gray);
+  --border-default: var(--color-light-gray);
+  --border-accent: var(--color-accent-light);
+
   color-scheme: light;
 
-  /* Surfaces — warm off-white. Never pure #fff on the page ground. */
-  --background: #fdfbf7;
-  --surface: #ffffff;
-  --surface-sunken: #f6f2ea;
-  --border: #e8e1d5;
-  --border-strong: #d6ccba;
+  /* Surfaces — Cream ground #F5F5F0, White cards #FFFFFF */
+  --background: var(--bg-page);
+  --surface: var(--bg-card);
+  --surface-sunken: #EBEBE4;
+  --border: var(--border-default);
+  --border-strong: #D5D5CD;
 
   /* Text */
-  --foreground: #1c1917;
-  --muted-foreground: #6b6259;
+  --foreground: var(--text-primary);
+  --muted-foreground: var(--text-secondary);
 
-  /* Primary — teal. Calm and credible, not corporate blue. */
-  --primary: #0f766e;
-  --primary-hover: #115e59;
-  --primary-foreground: #ffffff;
-  --primary-subtle: #eaf5f3;
+  /* Primary — Deep Charcoal (#1A1A00) */
+  --primary: var(--color-primary-dark);
+  --primary-hover: var(--color-soft-black);
+  --primary-foreground: #FFFFFF;
+  --primary-subtle: #F0F0D8;
 
-  /* Accent — amber. Encouragement, progress, "you're doing fine". */
-  --accent: #d97706;
-  --accent-subtle: #fef3e2;
+  /* Accent — Fresh Green (#FFFFC0) */
+  --accent: var(--color-accent-light);
+  --accent-hover: #FFFFB3;
+  --accent-subtle: #FAFAD6;
+  --accent-foreground: var(--color-primary-dark);
 
-  /* Status */
+  /* Status — paired with #1A1A00 text */
   --success: #15803d;
   --success-subtle: #edf7ee;
   --warning: #b45309;
@@ -41,69 +60,85 @@
   --danger: #b91c1c;
   --danger-subtle: #fdecec;
 
-  --ring: #0f766e;
+  --ring: var(--color-primary-dark);
+  --ring-accent: var(--color-accent-light);
 
-  /* One shadow definition. There is not a second one. */
-  --shadow-card: 0 1px 2px rgb(28 25 23 / 0.04), 0 4px 16px rgb(28 25 23 / 0.04);
-  --shadow-lifted: 0 2px 4px rgb(28 25 23 / 0.05), 0 12px 32px rgb(28 25 23 / 0.08);
+  /* Shadows */
+  --shadow-card: 0 1px 3px rgba(26, 26, 0, 0.05), 0 4px 16px rgba(26, 26, 0, 0.04);
+  --shadow-lifted: 0 2px 6px rgba(26, 26, 0, 0.06), 0 12px 32px rgba(26, 26, 0, 0.09);
+  --card-hover-overlay: rgba(26, 26, 0, 0.05);
 }
 
 :root:not([data-theme='light']) {
   @media (prefers-color-scheme: dark) {
     color-scheme: dark;
-    --background: #1a1816;
-    --surface: #221f1c;
-    --surface-sunken: #14120f;
-    --border: #35302a;
-    --border-strong: #4a443b;
-    --foreground: #f5f1ea;
-    --muted-foreground: #a69c8f;
-    --primary: #2dd4bf;
-    --primary-hover: #5eead4;
-    --primary-foreground: #14332f;
-    --primary-subtle: #14312d;
-    --accent: #fbbf24;
-    --accent-subtle: #38290f;
+    --background: #141406;
+    --surface: #1E1E0E;
+    --surface-sunken: #101004;
+    --border: #353522;
+    --border-strong: #4D4D36;
+    --foreground: #F5F5F0;
+    --muted-foreground: #A8A89A;
+    --primary: #FFFFC0;
+    --primary-hover: #FFFFB3;
+    --primary-foreground: #1A1A00;
+    --primary-subtle: #2C2C15;
+    --accent: #FFFFC0;
+    --accent-hover: #FFFFB3;
+    --accent-subtle: #2C2C15;
+    --accent-foreground: #1A1A00;
     --success: #4ade80;
     --success-subtle: #14301f;
     --warning: #fbbf24;
     --warning-subtle: #38290f;
     --danger: #f87171;
     --danger-subtle: #3a1a1a;
-    --ring: #2dd4bf;
-    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.24);
-    --shadow-lifted: 0 2px 4px rgb(0 0 0 / 0.36), 0 12px 32px rgb(0 0 0 / 0.4);
+    --ring: #FFFFC0;
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35), 0 4px 16px rgb(0 0 0 / 0.28);
+    --shadow-lifted: 0 2px 4px rgb(0 0 0 / 0.4), 0 12px 32px rgb(0 0 0 / 0.45);
+    --card-hover-overlay: rgba(255, 255, 192, 0.06);
   }
 }
 
 [data-theme='dark'] {
   color-scheme: dark;
-  --background: #1a1816;
-  --surface: #221f1c;
-  --surface-sunken: #14120f;
-  --border: #35302a;
-  --border-strong: #4a443b;
-  --foreground: #f5f1ea;
-  --muted-foreground: #a69c8f;
-  --primary: #2dd4bf;
-  --primary-hover: #5eead4;
-  --primary-foreground: #14332f;
-  --primary-subtle: #14312d;
-  --accent: #fbbf24;
-  --accent-subtle: #38290f;
+  --background: #141406;
+  --surface: #1E1E0E;
+  --surface-sunken: #101004;
+  --border: #353522;
+  --border-strong: #4D4D36;
+  --foreground: #F5F5F0;
+  --muted-foreground: #A8A89A;
+  --primary: #FFFFC0;
+  --primary-hover: #FFFFB3;
+  --primary-foreground: #1A1A00;
+  --primary-subtle: #2C2C15;
+  --accent: #FFFFC0;
+  --accent-hover: #FFFFB3;
+  --accent-subtle: #2C2C15;
+  --accent-foreground: #1A1A00;
   --success: #4ade80;
   --success-subtle: #14301f;
   --warning: #fbbf24;
   --warning-subtle: #38290f;
   --danger: #f87171;
   --danger-subtle: #3a1a1a;
-  --ring: #2dd4bf;
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.24);
-  --shadow-lifted: 0 2px 4px rgb(0 0 0 / 0.36), 0 12px 32px rgb(0 0 0 / 0.4);
+  --ring: #FFFFC0;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35), 0 4px 16px rgb(0 0 0 / 0.28);
+  --shadow-lifted: 0 2px 4px rgb(0 0 0 / 0.4), 0 12px 32px rgb(0 0 0 / 0.45);
+  --card-hover-overlay: rgba(255, 255, 192, 0.06);
 }
 
 /* `inline` so utilities resolve the var at runtime and the theme can swap live. */
 @theme inline {
+  --color-primary-dark: var(--color-primary-dark);
+  --color-accent-light: var(--color-accent-light);
+  --color-soft-black: var(--color-soft-black);
+  --color-cream: var(--color-cream);
+  --color-light-gray: var(--color-light-gray);
+  --color-warm-gray: var(--color-warm-gray);
+  --color-white: var(--color-white);
+
   --color-background: var(--background);
   --color-surface: var(--surface);
   --color-sunken: var(--surface-sunken);
@@ -116,6 +151,7 @@
   --color-primary-fg: var(--primary-foreground);
   --color-primary-subtle: var(--primary-subtle);
   --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
   --color-accent-subtle: var(--accent-subtle);
   --color-success: var(--success);
   --color-success-subtle: var(--success-subtle);
@@ -185,22 +221,24 @@
     letter-spacing: -0.021em;
     line-height: 1.15;
     text-wrap: balance;
+    color: var(--text-primary);
   }
 
   p {
     text-wrap: pretty;
   }
 
-  /* Visible, consistent, never removed. */
+  /* Form & Interactive Focus: #FFFFC0 with #1A1A00 outline per Guide Page 5 */
   :focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
+    outline: 2px solid var(--color-primary-dark);
+    box-shadow: 0 0 0 3px var(--color-accent-light);
+    outline-offset: 1px;
     border-radius: 4px;
   }
 
   ::selection {
-    background-color: var(--primary);
-    color: var(--primary-foreground);
+    background-color: var(--color-accent-light);
+    color: var(--color-primary-dark);
   }
 
   /* Numeric columns (grades, scores, credit tallies) must not jitter. */
