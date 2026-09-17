@@ -18,8 +18,16 @@ import { cn } from '@/lib/utils'
  * pages that never show a toast at all. Two class names do the same job.
  */
 
-type Toast = { id: number; message: string; tone: 'neutral' | 'success'; leaving: boolean }
-type ToastContextValue = (message: string, tone?: 'neutral' | 'success') => void
+type Toast = {
+  id: number
+  message: string
+  tone: 'neutral' | 'success' | 'warning' | 'danger'
+  leaving: boolean
+}
+type ToastContextValue = (
+  message: string,
+  tone?: 'neutral' | 'success' | 'warning' | 'danger',
+) => void
 
 const ToastContext = React.createContext<ToastContextValue | null>(null)
 
@@ -71,14 +79,19 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           <div
             key={toast.id}
             className={cn(
-              'pointer-events-auto rounded-md border px-4 py-3 text-[0.9375rem] shadow-lifted',
+              'pointer-events-auto rounded-md border px-4 py-3 text-[0.9375rem] font-medium shadow-lifted',
               'transition-[opacity,transform] duration-[260ms] ease-[var(--ease-out-quint)]',
               toast.leaving
                 ? '-translate-x-4 scale-[0.97] opacity-0'
                 : 'animate-settle translate-x-0 scale-100 opacity-100',
-              toast.tone === 'success'
-                ? 'border-success/25 bg-success-subtle text-success'
-                : 'border-border bg-surface text-foreground',
+              toast.tone === 'success' &&
+                'border-success/30 bg-success-subtle text-[var(--color-primary-dark)]',
+              toast.tone === 'warning' &&
+                'border-warning/30 bg-warning-subtle text-[var(--color-primary-dark)]',
+              toast.tone === 'danger' &&
+                'border-danger/30 bg-danger-subtle text-[var(--color-primary-dark)]',
+              toast.tone === 'neutral' &&
+                'border-[var(--color-light-gray)] bg-surface text-[var(--color-primary-dark)]',
             )}
           >
             {toast.message}

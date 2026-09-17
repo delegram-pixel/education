@@ -123,7 +123,7 @@ export default async function HomePage() {
           {STEPS.map((step, i) => (
             <Reveal as="li" key={step.title} delay={i * 90}>
               <Card className="h-full p-6" interactive>
-                <div className="flex size-11 items-center justify-center rounded-md bg-primary-subtle text-primary">
+                <div className="flex size-11 items-center justify-center rounded-md bg-[var(--color-primary-dark)] text-[var(--color-accent-light)] shadow-sm">
                   <step.icon aria-hidden className="size-5" />
                 </div>
                 <h3 className="mt-5 text-[1.1875rem]">{step.title}</h3>

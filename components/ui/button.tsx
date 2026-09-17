@@ -22,18 +22,21 @@ const button = cva(
   {
     variants: {
       variant: {
-        primary: 'bg-primary text-primary-fg hover:bg-primary-hover shadow-card',
+        primary:
+          'bg-[var(--color-primary-dark)] text-white hover:bg-[var(--color-soft-black)] shadow-card',
         secondary:
-          'bg-surface text-foreground border border-border-strong hover:border-primary hover:text-primary shadow-card',
-        ghost: 'text-muted hover:text-foreground hover:bg-sunken before:hidden',
-        subtle: 'bg-primary-subtle text-primary hover:bg-primary hover:text-primary-fg',
+          'bg-[var(--color-accent-light)] text-[var(--color-primary-dark)] hover:bg-[#FFFFB3] border border-transparent shadow-card font-semibold',
+        ghost:
+          'bg-transparent text-[var(--color-primary-dark)] border-2 border-[var(--color-light-gray)] hover:bg-[var(--color-primary-dark)]/[0.06] before:hidden',
+        subtle:
+          'bg-[var(--color-accent-light)]/40 text-[var(--color-primary-dark)] hover:bg-[var(--color-accent-light)]',
         danger: 'bg-danger-subtle text-danger hover:bg-danger hover:text-white',
       },
       size: {
-        sm: 'h-9 rounded-md px-3.5 text-[0.9375rem]',
-        md: 'h-11 rounded-md px-5 text-[1.0625rem]',
-        lg: 'h-14 rounded-lg px-7 text-[1.125rem]',
-        icon: 'size-10 rounded-md',
+        sm: 'h-11 min-h-[44px] rounded-md px-3.5 text-[0.9375rem]',
+        md: 'h-11 min-h-[44px] rounded-md px-5 text-[1.0625rem]',
+        lg: 'h-14 min-h-[44px] rounded-lg px-7 text-[1.125rem]',
+        icon: 'size-11 min-h-[44px] min-w-[44px] rounded-md',
       },
     },
     defaultVariants: { variant: 'primary', size: 'md' },
