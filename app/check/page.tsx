@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 
 import { CheckFlow } from '@/components/eligibility/check-flow'
 import { Reveal } from '@/components/shared/reveal'
+import { UniversityPicker } from '@/components/university/university-picker'
 import { Badge } from '@/components/ui/badge'
 import { Arrow } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -28,9 +29,10 @@ export default async function CheckPage({
     return (
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
         <header className="mb-8">
-          <Badge tone="primary" className="mb-3">
-            {course.institutionShort} &middot; {course.faculty}
-          </Badge>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <Badge tone="primary">{course.institutionShort} &middot; {course.faculty}</Badge>
+            <UniversityPicker className="min-w-[14rem]" />
+          </div>
           <h1
             className="text-[2rem] sm:text-[2.5rem]"
             // Receives the morph from the card that opened this page.
