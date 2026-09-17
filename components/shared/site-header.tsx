@@ -76,7 +76,7 @@ export function SiteHeader() {
             suggestedQuestion="I have a question about my admission process. What should I do next?"
             label="Ask"
             size="sm"
-            className="open-chat h-10 border-border bg-surface px-4 text-[0.9375rem] hover:border-primary hover:bg-accent hover:text-accent-fg"
+            className="open-chat h-10 border-border bg-surface px-4 text-[0.9375rem] text-foreground hover:border-primary hover:bg-accent hover:text-accent-fg"
           />
         </div>
       </div>
