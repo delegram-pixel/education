@@ -6,6 +6,7 @@ import * as React from 'react'
 
 import { Button, type ButtonProps } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
+import { Tooltip } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 
 /**
@@ -78,12 +79,14 @@ export function AskCopilotButton({
   if (widget === 'unavailable') {
     const href = `${fallbackHref}?q=${encodeURIComponent(suggestedQuestion)}`
     return (
-      <Button asChild variant={variant} size={size} className={cn('group', className)}>
-        <Link href={href}>
-          {showIcon ? <MessageCircleQuestion aria-hidden className="size-4" /> : null}
-          Ask a counselor
-        </Link>
-      </Button>
+      <Tooltip content="Send this question to a counselor with the relevant context attached.">
+        <Button asChild variant={variant} size={size} className={cn('group', className)}>
+          <Link href={href}>
+            {showIcon ? <MessageCircleQuestion aria-hidden className="size-4" /> : null}
+            Ask a counselor
+          </Link>
+        </Button>
+      </Tooltip>
     )
   }
 
@@ -100,16 +103,18 @@ export function AskCopilotButton({
   }
 
   return (
-    <Button
-      variant={variant}
-      size={size}
-      onClick={handleClick}
-      disabled={widget === 'pending'}
-      className={cn('group', className)}
-      {...props}
-    >
-      {showIcon ? <MessageCircleQuestion aria-hidden className="size-4" /> : null}
-      {label}
-    </Button>
+    <Tooltip content="Open the counselor chat with a useful question already prepared.">
+      <Button
+        variant={variant}
+        size={size}
+        onClick={handleClick}
+        disabled={widget === 'pending'}
+        className={cn('group', className)}
+        {...props}
+      >
+        {showIcon ? <MessageCircleQuestion aria-hidden className="size-4" /> : null}
+        {label}
+      </Button>
+    </Tooltip>
   )
 }

@@ -4,6 +4,7 @@ import { Monitor, Moon, Sun } from 'lucide-react'
 import * as React from 'react'
 
 import { cn } from '@/lib/utils'
+import { Tooltip } from '@/components/ui/tooltip'
 
 type Theme = 'light' | 'dark' | 'system'
 
@@ -53,11 +54,12 @@ export function ThemeToggle() {
   const activeIndex = OPTIONS.findIndex((o) => o.value === theme)
 
   return (
-    <div
-      role="radiogroup"
-      aria-label="Colour theme"
-      className="relative flex items-center gap-0.5 rounded-md border border-border bg-sunken p-0.5"
-    >
+    <Tooltip content="Choose light mode, dark mode, or follow your device setting.">
+      <div
+        role="radiogroup"
+        aria-label="Colour theme"
+        className="relative flex items-center gap-0.5 rounded-md border border-border bg-sunken p-0.5"
+      >
       {/* The travelling pill. Transform-only, so it never triggers layout. */}
       <span
         aria-hidden
@@ -85,6 +87,7 @@ export function ThemeToggle() {
           <Icon aria-hidden className="size-[1.05rem]" />
         </button>
       ))}
-    </div>
+      </div>
+    </Tooltip>
   )
 }
