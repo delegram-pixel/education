@@ -6,6 +6,7 @@ import * as React from 'react'
 
 import { ThemeToggle } from '@/components/shared/theme-toggle'
 import { Wordmark } from '@/components/shared/wordmark'
+// import { LanguageSelector } from '@/components/shared/language-preference'
 import { AskCopilotButton } from '@/components/swift/ask-copilot-button'
 import { cn } from '@/lib/utils'
 
@@ -71,6 +72,9 @@ export function SiteHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2 md:ml-0">
+          {/* <div className="hidden sm:block">
+            <LanguageSelector />
+          </div> */}
           <ThemeToggle />
           <AskCopilotButton
             suggestedQuestion="I have a question about my admission process. What should I do next?"
@@ -105,6 +109,9 @@ export function SiteHeader() {
           )
         })}
       </nav>
+      {/* <div className="border-t border-border px-4 py-2 sm:hidden">
+        <LanguageSelector />
+      </div> */}
     </header>
   )
 }

@@ -65,14 +65,31 @@ export function OLevelForm({
   course,
   pending,
   onSubmit,
+  importedResults,
 }: {
   course: Course
   pending: boolean
   onSubmit: (results: OLevelResult[]) => void
+  importedResults?: OLevelResult[]
 }) {
   const [rows, setRows] = React.useState<Row[]>(() => initialRows(course))
   const [twoSittings, setTwoSittings] = React.useState(false)
   const [touched, setTouched] = React.useState(false)
+
+  React.useEffect(() => {
+    if (!importedResults?.length) return
+    const imported = new Map(importedResults.map((result) => [result.subject, result]))
+    const next = initialRows(course).map((row) => {
+      const result = row.subject ? imported.get(row.subject) : undefined
+      return result ? { ...row, grade: result.grade, sitting: result.sitting } : row
+    })
+    for (const result of importedResults) {
+      if (next.some((row) => row.subject === result.subject) || next.length >= MAX_SUBJECT_ROWS) continue
+      next.push({ key: newKey(), subject: result.subject, grade: result.grade, sitting: result.sitting, locked: false })
+    }
+    setRows(next)
+    setTouched(false)
+  }, [course, importedResults])
 
   const complete = rows.filter(
     (r): r is Row & { subject: SubjectCode; grade: Grade } => r.subject !== null && r.grade !== null,

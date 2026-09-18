@@ -8,6 +8,7 @@ import { AskCopilotButton } from '@/components/swift/ask-copilot-button'
 import { Badge } from '@/components/ui/badge'
 import { Arrow, Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
+import { LANGUAGES, useLanguage } from '@/components/shared/language-preference'
 import { subjectName, type Course, type Verdict } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -89,6 +90,19 @@ export function VerdictCard({
   const tone = TONE[verdict.status]
   const Icon = tone.icon
   const toast = useToast()
+  const { language } = useLanguage()
+  const escalationContext = [
+    'I need a counselor to review an eligibility result.',
+    `Course: ${course.name} at ${course.institution}.`,
+    `Checker verdict: ${verdict.explanation}`,
+    `Credits counted: ${verdict.creditCount}/${course.olevelRule.minCredits}.`,
+    verdict.missing.length
+      ? `Requirements to review: ${verdict.missing.map((item) => subjectName(item.subject)).join(', ')}.`
+      : null,
+    `Preferred response language: ${LANGUAGES[language].label}.`,
+  ]
+    .filter(Boolean)
+    .join('\n')
 
   const requirements = [
     ...verdict.satisfied.map((s) => ({
@@ -254,9 +268,7 @@ export function VerdictCard({
         </p>
         <Button asChild variant="secondary" size="sm">
           <Link
-            href={`/tickets/new?category=eligibility_dispute&course=${course.id}&q=${encodeURIComponent(
-              `My eligibility check for ${course.name} said: ${verdict.explanation}`,
-            )}`}
+            href={`/tickets/new?category=eligibility_dispute&course=${course.id}&lang=${language}&q=${encodeURIComponent(escalationContext)}`}
           >
             This doesn&rsquo;t look right
           </Link>

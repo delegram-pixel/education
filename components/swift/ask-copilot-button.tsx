@@ -7,6 +7,7 @@ import * as React from 'react'
 import { Button, type ButtonProps } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { Tooltip } from '@/components/ui/tooltip'
+import { LANGUAGES, useLanguage } from '@/components/shared/language-preference'
 import { cn } from '@/lib/utils'
 
 /**
@@ -75,9 +76,13 @@ export function AskCopilotButton({
 }: AskCopilotButtonProps) {
   const widget = useSwiftWidget()
   const toast = useToast()
+  const { language } = useLanguage()
+  const languageInstruction = LANGUAGES[language].instruction
+  const contextualQuestion = `${suggestedQuestion}\n\nPreferred response language: ${LANGUAGES[language].label}. ${languageInstruction}`
 
   if (widget === 'unavailable') {
-    const href = `${fallbackHref}?q=${encodeURIComponent(suggestedQuestion)}`
+    const separator = fallbackHref.includes('?') ? '&' : '?'
+    const href = `${fallbackHref}${separator}q=${encodeURIComponent(contextualQuestion)}&lang=${language}`
     return (
       <Tooltip content="Send this question to a counselor with the relevant context attached.">
         <Button asChild variant={variant} size={size} className={cn('group', className)}>
@@ -92,7 +97,7 @@ export function AskCopilotButton({
 
   async function handleClick() {
     try {
-      await navigator.clipboard.writeText(suggestedQuestion)
+      await navigator.clipboard.writeText(contextualQuestion)
       toast('Question copied — paste it into the chat.', 'success')
     } catch {
       // Clipboard access can be refused outright. Opening the panel is still
