@@ -36,24 +36,34 @@ export function AnnotatedShot({
   stepNumber: number
 }) {
   const [loaded, setLoaded] = React.useState(false)
+  const [failed, setFailed] = React.useState(false)
+
+  const wireframe = <IllustrativeWireframe label={alt} />
 
   const figure = (
     <div className="relative aspect-[16/10] w-full overflow-hidden rounded-md border border-border bg-sunken">
-      {!loaded ? <div className="skeleton absolute inset-0" /> : null}
+      {!loaded && !failed ? <div className="skeleton absolute inset-0" /> : null}
 
-      <img
-        src={src}
-        alt={alt}
-        width={1280}
-        height={800}
-        loading={stepNumber === 1 ? 'eager' : 'lazy'}
-        onLoad={() => setLoaded(true)}
-        onError={() => setLoaded(true)}
-        className={cn(
-          'size-full object-cover transition-opacity duration-500',
-          loaded ? 'opacity-100' : 'opacity-0',
-        )}
-      />
+      {failed ? (
+        wireframe
+      ) : (
+        <img
+          src={src}
+          alt={alt}
+          width={1280}
+          height={800}
+          loading={stepNumber === 1 ? 'eager' : 'lazy'}
+          onLoad={() => setLoaded(true)}
+          onError={() => {
+            setFailed(true)
+            setLoaded(true)
+          }}
+          className={cn(
+            'size-full object-cover transition-opacity duration-500',
+            loaded ? 'opacity-100' : 'opacity-0',
+          )}
+        />
+      )}
 
       {hotspot ? (
         <div
@@ -96,7 +106,7 @@ export function AnnotatedShot({
         <DialogTitle className="sr-only">{alt}</DialogTitle>
         <div className="overflow-hidden rounded-lg border border-border bg-surface shadow-lifted">
           <div className="relative">
-            <img src={src} alt={alt} width={1280} height={800} className="w-full" />
+            {failed ? wireframe : <img src={src} alt={alt} width={1280} height={800} className="w-full" />}
             {hotspot ? (
               <div
                 aria-hidden
@@ -114,5 +124,46 @@ export function AnnotatedShot({
         </div>
       </DialogContent>
     </Dialog>
+  )
+}
+
+/**
+ * A graceful local replacement for a guide image that has not been supplied
+ * yet. It prevents a broken-image icon from becoming part of the student
+ * experience while still making it unmistakable that this is an illustration,
+ * not the live admissions portal.
+ */
+function IllustrativeWireframe({ label }: { label: string }) {
+  const title = label.replace(/^Step \d+: /, '')
+
+  return (
+    <div
+      role="img"
+      aria-label={label}
+      className="grid size-full place-items-center bg-[#f5f5f0] p-[8%] text-[#242a18]"
+    >
+      <div className="w-full overflow-hidden rounded-lg border border-[#d9d9d1] bg-white shadow-sm">
+        <div className="flex h-10 items-center gap-2 border-b border-[#d9d9d1] bg-[#fafaf6] px-4">
+          <span className="size-2 rounded-full bg-[#d6d6cf]" />
+          <span className="size-2 rounded-full bg-[#d6d6cf]" />
+          <span className="size-2 rounded-full bg-[#d6d6cf]" />
+          <span className="ml-3 rounded bg-[#eeeeE8] px-3 py-1 text-[0.625rem] text-[#77776f]">
+            Illustrative registration screen
+          </span>
+        </div>
+        <div className="bg-[#242a18] px-7 py-4 text-sm font-semibold text-white">Registration</div>
+        <div className="p-7 sm:p-10">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#77776f]">Current step</p>
+          <h3 className="mt-2 text-xl font-semibold sm:text-2xl">{title}</h3>
+          <div className="mt-6 rounded-md border border-[#cbc889] bg-[#f7f5da] p-4 sm:p-5">
+            <p className="text-sm font-semibold">Follow the instruction shown on the official portal.</p>
+            <p className="mt-2 text-xs leading-relaxed text-[#5f5f58]">
+              This illustrative panel marks the part of the screen to check before continuing.
+            </p>
+          </div>
+          <div className="mt-6 h-10 w-36 rounded-md bg-[#242a18]" />
+        </div>
+      </div>
+    </div>
   )
 }

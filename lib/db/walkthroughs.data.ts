@@ -65,7 +65,7 @@ export const WALKTHROUGHS: Walkthrough[] = [
         title: 'Send your NIN by text message',
         instruction:
           'Send your NIN as a text message to the shortcode shown on the screen, using the same phone number you just entered.',
-        screenshotUrl: '/guides/jamb/2.png',
+        screenshotUrl: '/guides/jamb/2.svg',
         hotspot: { x: 28, y: 40, w: 44, h: 13 }, // the shortcode panel, not a button
         tip: null,
       },
