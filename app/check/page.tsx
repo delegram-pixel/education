@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 
 import { CheckFlow } from '@/components/eligibility/check-flow'
 import { CoursePicker } from '@/components/eligibility/course-picker'
+import { AdmissionSafetyNotice } from '@/components/shared/admission-safety-notice'
+import { CourseDiscovery } from '@/components/swift/course-discovery'
 import { Reveal } from '@/components/shared/reveal'
 import { Badge } from '@/components/ui/badge'
 import { findCourse, listCourses } from '@/lib/db/queries'
@@ -65,7 +67,15 @@ export default async function CheckPage({
       </Reveal>
 
       <Reveal>
+        <AdmissionSafetyNotice className="mt-6" />
+      </Reveal>
+
+      <Reveal>
         <CoursePicker courses={courses} />
+      </Reveal>
+
+      <Reveal delay={90}>
+        <CourseDiscovery />
       </Reveal>
 
       {degraded ? (

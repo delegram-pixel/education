@@ -1,9 +1,17 @@
 'use server'
 
+import { searchProgrammes } from '@/lib/db/discovery'
 import { checkEligibility } from '@/lib/eligibility/engine'
 import { findCourse, saveCheck } from '@/lib/db/queries'
 import { ensureSessionId } from '@/lib/session'
-import { resultSetSchema, type OLevelResult, type Verdict } from '@/lib/types'
+import type { DiscoveryMatch } from '@/lib/discovery'
+import {
+  SUBJECT_CODES,
+  resultSetSchema,
+  type OLevelResult,
+  type SubjectCode,
+  type Verdict,
+} from '@/lib/types'
 
 export type CheckState =
   | { status: 'idle' }
@@ -44,4 +52,46 @@ export async function runCheck(courseId: string, results: OLevelResult[]): Promi
   const shareId = await saveCheck({ sessionId, courseId, results: parsed.data, verdict })
 
   return { status: 'done', verdict, courseId, shareId }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Course discovery                                                            */
+/* -------------------------------------------------------------------------- */
+
+export type DiscoveryState =
+  | { status: 'idle' }
+  | { status: 'error'; message: string }
+  | {
+      status: 'done'
+      matches: DiscoveryMatch[]
+      /** Total matches before truncation, so the UI can be honest about the cap. */
+      total: number
+      /** Where the catalogue came from — surfaced so the UI can be honest about reach. */
+      source: 'ibass' | 'sample'
+      subjects: SubjectCode[]
+    }
+
+/**
+ * Find programmes that list the subjects a student has.
+ *
+ * The subjects arrive from the client as codes the chip picker produced, but
+ * they are re-validated here against `SUBJECT_CODES` — a server action is a
+ * public endpoint, and the matcher should never be handed a code that is not
+ * real.
+ *
+ * This deliberately returns no verdict, and could not: it has subject names and
+ * no grades. The strongest thing it can offer is a link into the checker.
+ */
+export async function discoverCourses(subjects: string[]): Promise<DiscoveryState> {
+  const known = new Set<string>(SUBJECT_CODES)
+  const valid = subjects.filter((subject): subject is SubjectCode => known.has(subject))
+  const unique = SUBJECT_CODES.filter((code) => valid.includes(code))
+
+  if (!unique.length) {
+    return { status: 'error', message: 'Add at least one subject to search with.' }
+  }
+
+  const { matches, total, source } = await searchProgrammes(unique)
+
+  return { status: 'done', matches, total, source, subjects: unique }
 }

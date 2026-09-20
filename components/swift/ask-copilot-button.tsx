@@ -8,6 +8,7 @@ import { Button, type ButtonProps } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { Tooltip } from '@/components/ui/tooltip'
 import { LANGUAGES, useLanguage } from '@/components/shared/language-preference'
+import { SAFETY_GUARDRAIL } from '@/lib/swift/safety'
 import { cn } from '@/lib/utils'
 
 /**
@@ -63,6 +64,11 @@ type AskCopilotButtonProps = Omit<ButtonProps, 'children'> & {
  * would work until it silently didn't, which on a demo stage is the worst
  * possible failure. Copying the question and telling the student to paste it is
  * honest, reliable, and one keystroke away from the same outcome.
+ *
+ * WHY THE SAFETY GUARDRAIL IS APPENDED HERE: the deadline and scam rules have to
+ * hold for every question the app asks, not just the ones whose author remembered.
+ * Appending at the single point every trigger funnels through means a trigger
+ * added next year carries them too. See `lib/swift/safety.ts`.
  */
 export function AskCopilotButton({
   suggestedQuestion,
@@ -78,7 +84,11 @@ export function AskCopilotButton({
   const toast = useToast()
   const { language } = useLanguage()
   const languageInstruction = LANGUAGES[language].instruction
-  const contextualQuestion = `${suggestedQuestion}\n\nPreferred response language: ${LANGUAGES[language].label}. ${languageInstruction}`
+  const contextualQuestion = [
+    suggestedQuestion,
+    `Preferred response language: ${LANGUAGES[language].label}. ${languageInstruction}`,
+    SAFETY_GUARDRAIL,
+  ].join('\n\n')
 
   if (widget === 'unavailable') {
     const separator = fallbackHref.includes('?') ? '&' : '?'

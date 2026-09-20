@@ -5,6 +5,7 @@ import Link from 'next/link'
 import * as React from 'react'
 
 import { AskCopilotButton } from '@/components/swift/ask-copilot-button'
+import { AdmissionSafetyNotice } from '@/components/shared/admission-safety-notice'
 import { Badge } from '@/components/ui/badge'
 import { Arrow, Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
@@ -228,6 +229,10 @@ export function VerdictCard({
           ))}
         </ol>
       </div>
+
+      {/* The moment a student is most likely to act on a fee or a deadline is
+          the moment they have just been told they qualify. */}
+      <AdmissionSafetyNotice compact className="mt-5" />
 
       {/* Actions */}
       <div className="mt-6 flex flex-wrap items-center gap-3">

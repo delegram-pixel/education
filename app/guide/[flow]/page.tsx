@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 
 import { Stepper } from '@/components/guide/stepper'
+import { AdmissionSafetyNotice } from '@/components/shared/admission-safety-notice'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { findWalkthrough, listWalkthroughs } from '@/lib/db/queries'
@@ -67,6 +68,7 @@ export default async function GuidePage({ params }: { params: Promise<{ flow: st
             Illustrative wireframes — not screenshots of the real portal
           </Badge>
         </p>
+        <AdmissionSafetyNotice />
       </header>
 
       <Stepper walkthrough={walkthrough} />

@@ -54,10 +54,11 @@ Create a `.env.local` file in the project root if you want to provide your own d
 ```bash
 DATABASE_URL=your_neon_or_postgres_connection_string
 
-# Public Swift Agents widget credentials used by the browser.
+# Swift Agents widget credentials. Read by the server at request time, so they
+# can be rotated without a rebuild; they are not inlined into the bundle.
 # Replace with your real values from the Swift dashboard.
-NEXT_PUBLIC_SWIFT_COMPANY_ID="your_swift_company_id"
-NEXT_PUBLIC_SWIFT_API_KEY="your_swift_api_key"
+SWIFT_COMPANY_ID="your_swift_company_id"
+SWIFT_API_KEY="your_swift_api_key"
 ```
 
 Note: the app is designed to work without a database configured as well. If `DATABASE_URL` is missing, it falls back to static data in many flows.

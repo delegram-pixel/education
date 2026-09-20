@@ -1,11 +1,11 @@
 'use client'
 
-import { ArrowLeft, BookOpen, Check, CircleHelp, Lightbulb } from 'lucide-react'
+import { ArrowLeft, BookOpen, Check, Lightbulb } from 'lucide-react'
 import Link from 'next/link'
 import * as React from 'react'
 
 import { AnnotatedShot } from '@/components/guide/annotated-shot'
-import { AskCopilotButton } from '@/components/swift/ask-copilot-button'
+import { StepCompanion } from '@/components/guide/step-companion'
 import { Badge } from '@/components/ui/badge'
 import { Arrow, Button } from '@/components/ui/button'
 import type { Walkthrough } from '@/lib/types'
@@ -200,17 +200,10 @@ export function Stepper({ walkthrough }: { walkthrough: Walkthrough }) {
           ) : null}
         </article>
 
-        {/* Friction point #3: stuck on a specific step. */}
-        <div className="mt-6 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface p-4 shadow-card">
-          <CircleHelp aria-hidden className="size-5 text-primary" />
-          <p className="flex-1 text-[0.9375rem] text-muted">
-            Screen not looking like this, or something not working?
-          </p>
-          <AskCopilotButton
-            suggestedQuestion={`I'm on "${step.title}" in the ${walkthrough.title} process and I'm stuck. ${step.instruction} What should I do?`}
-            label="I'm stuck on this step"
-          />
-        </div>
+        {/* Friction point #3: stuck on a specific step. Kept outside the keyed
+            article above so changing step does not remount the widget polling
+            behind these buttons. */}
+        <StepCompanion walkthrough={walkthrough} step={step} />
 
         <div className="mt-6 flex items-center justify-between gap-3 border-t border-border pt-6">
           <Button variant="ghost" onClick={() => go(index - 1)} disabled={index === 0}>
