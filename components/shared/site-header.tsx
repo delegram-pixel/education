@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils'
 
 const NAV = [
   { href: '/check', label: 'Check eligibility' },
+  { href: '/schools', label: 'Schools' },
   { href: '/guide', label: 'Registration guides' },
   { href: '/quiz', label: 'Course fit' },
   // { href: '/design-system', label: 'Color System Guide' },
@@ -80,7 +81,8 @@ export function SiteHeader() {
             suggestedQuestion="I have a question about my admission process. What should I do next?"
             label="Ask"
             size="sm"
-            className="open-chat h-10 border-border bg-surface px-4 text-[0.9375rem] text-foreground hover:border-primary hover:bg-accent hover:text-accent-fg"
+            counselorLabel="Counselor"
+            className="h-10 border-border bg-surface px-4 text-[0.9375rem] text-foreground hover:border-primary hover:bg-accent hover:text-accent-fg"
           />
         </div>
       </div>

@@ -57,6 +57,53 @@ function retryable(error: unknown): boolean {
   return false
 }
 
+const WRITE_ATTEMPTS = 4
+
+/**
+ * A catalogue write is safe to repeat, and that is the entire reason it can be
+ * retried. Every write below is an `onConflictDoUpdate` upsert built from values
+ * already in hand, so a second attempt either performs a write that never landed
+ * or rewrites a row with exactly what it already holds.
+ *
+ * This matters because a dropped connection leaves the outcome genuinely
+ * unknown: the row may have committed before the response was lost. Anything not
+ * safe to repeat could not be retried here at all.
+ *
+ * The Neon driver wraps its transport failures, so the signal we need sits on
+ * `sourceError`, not on the error that reaches us. A real SQL error carries no
+ * `sourceError` and is deliberately not retried — repeating it would only fail
+ * the same way four times.
+ */
+function retryableWrite(error: unknown): boolean {
+  if (retryable(error)) return true
+  const source = (error as { sourceError?: unknown } | null)?.sourceError
+  return source ? retryable(source) : false
+}
+
+/**
+ * The database half of the import needs the same protection the API half already
+ * has. Without it a momentary drop costs the whole run: the API calls above
+ * survive one and carry on, so an unprotected write is the only thing left that
+ * can end a multi-minute import.
+ *
+ * `operation` builds a fresh query per attempt, which is required — a drizzle
+ * builder is thenable rather than a reusable promise.
+ */
+async function write(operation: () => Promise<unknown>): Promise<void> {
+  for (let attempt = 1; attempt <= WRITE_ATTEMPTS; attempt += 1) {
+    try {
+      await operation()
+      return
+    } catch (error) {
+      if (!retryableWrite(error) || attempt === WRITE_ATTEMPTS) throw error
+      console.warn(`Catalogue write was interrupted; retrying (${attempt}/${WRITE_ATTEMPTS})...`)
+    }
+
+    // Back off before retrying, matching the API calls above.
+    await sleep(1_000 * 2 ** (attempt - 1))
+  }
+}
+
 async function request(path: string, body?: ApiRecord): Promise<ApiRecord> {
   for (let attempt = 1; attempt <= MAX_REQUEST_ATTEMPTS; attempt += 1) {
     try {
@@ -110,6 +157,25 @@ async function main() {
 
   const db = drizzle(neon(url))
   const importedAt = new Date()
+
+  // Resumability is opt-in, because the ordinary reason to run this is to pick
+  // up changes in IBASS — and skipping every institution we already hold would
+  // silently import nothing. With RESUME=1 a run that died partway can simply be
+  // restarted, and it will redo only what it had not finished.
+  //
+  // Completion is judged by whether programmes exist, not by the institution
+  // row. The institution insert happens first, so an institution interrupted
+  // between the two writes is correctly redone from scratch rather than skipped.
+  const alreadyImported =
+    process.env.RESUME === '1'
+      ? new Set(
+          (await db.select({ id: catalogueProgrammes.institutionId }).from(catalogueProgrammes)).map(
+            (row) => row.id,
+          ),
+        )
+      : null
+  let skippedCount = 0
+
   const types = records(await request('/inst-type'))
   if (!types.length) throw new Error('IBASS returned no institution types; the import was not changed.')
 
@@ -147,6 +213,11 @@ async function main() {
       const name = pick(institution, 'title', 'name', 'institution_name')
       if (!institutionId || !name) continue
 
+      if (alreadyImported?.has(institutionId)) {
+        skippedCount += 1
+        continue
+      }
+
       const categoryId = pick(institution, 'inst_category', 'category_id', 'category')
       const category = categories.find((item) => valueForFilter(item) === categoryId)
       const row = {
@@ -158,7 +229,12 @@ async function main() {
         sourceUrl: BROCHURE_URL,
         sourceUpdatedAt: importedAt,
       }
-      await db.insert(catalogueInstitutions).values(row).onConflictDoUpdate({ target: catalogueInstitutions.id, set: row })
+      await write(() =>
+        db
+          .insert(catalogueInstitutions)
+          .values(row)
+          .onConflictDoUpdate({ target: catalogueInstitutions.id, set: row }),
+      )
       institutionCount += 1
 
       const programmeFirstPage = await request(`/ibass/institution/programmes/${institutionId}?page=1`, {
@@ -188,16 +264,26 @@ async function main() {
           sourceUrl: BROCHURE_URL,
           sourceUpdatedAt: importedAt,
         }
-        await db.insert(catalogueProgrammes).values(row).onConflictDoUpdate({ target: catalogueProgrammes.id, set: row })
+        await write(() =>
+          db
+            .insert(catalogueProgrammes)
+            .values(row)
+            .onConflictDoUpdate({ target: catalogueProgrammes.id, set: row }),
+        )
         programmeCount += 1
       }
     }
   }
 
-  console.log(`Imported ${institutionCount} institutions and ${programmeCount} programmes from JAMB IBASS.`)
+  const skipped = skippedCount ? ` Skipped ${skippedCount} already imported.` : ''
+  console.log(
+    `Imported ${institutionCount} institutions and ${programmeCount} programmes from JAMB IBASS.${skipped}`,
+  )
 }
 
 main().catch((error) => {
-  console.error('IBASS catalogue sync failed:', error)
+  // Not "IBASS" — a failure here is at least as likely to be the database, and
+  // saying IBASS sent us looking in the wrong place more than once.
+  console.error('Catalogue sync failed:', error)
   process.exit(1)
 })

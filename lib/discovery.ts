@@ -58,12 +58,25 @@ function bySubjectOrder(a: SubjectCode, b: SubjectCode): number {
  * compares whole normalised names — an approximate match here would attach a
  * real verdict to a programme nobody reviewed.
  */
-function nameKey(value: string): string {
+export function nameKey(value: string): string {
   return value
     .toLowerCase()
     .replace(/&/g, ' and ')
     .replace(/[^a-z0-9]+/g, ' ')
     .trim()
+}
+
+/**
+ * `${nameKey(institution)}|${nameKey(programme)}` → the reviewed course id.
+ *
+ * Shared by the subject search and the by-school view so both resolve a mirrored
+ * row to a reviewed course the same way. Two different answers here would mean a
+ * programme offering a checker link in one place and not the other.
+ */
+export function reviewedCourseIndex(courses: Course[]): Map<string, string> {
+  return new Map(
+    courses.map((course) => [`${nameKey(course.institution)}|${nameKey(course.name)}`, course.id]),
+  )
 }
 
 /**
@@ -83,11 +96,7 @@ export function matchProgrammes(
   if (!subjects.length) return []
 
   const wanted = new Set(subjects)
-
-  const reviewedByKey = new Map<string, string>()
-  for (const course of courses) {
-    reviewedByKey.set(`${nameKey(course.institution)}|${nameKey(course.name)}`, course.id)
-  }
+  const reviewedByKey = reviewedCourseIndex(courses)
 
   const matches: DiscoveryMatch[] = []
   const seen = new Set<string>()

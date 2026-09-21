@@ -10,6 +10,8 @@
 
 import { z } from 'zod'
 
+import type { EpinPurchase } from '@/lib/epin/types'
+
 /* -------------------------------------------------------------------------- */
 /* Grades                                                                      */
 /* -------------------------------------------------------------------------- */
@@ -235,7 +237,7 @@ export type Course = {
 /* Walkthroughs                                                                */
 /* -------------------------------------------------------------------------- */
 
-export const WALKTHROUGH_IDS = ['jamb', 'unilag-postutme'] as const
+export const WALKTHROUGH_IDS = ['jamb', 'unilag-postutme', 'jamb-epin'] as const
 export type WalkthroughId = (typeof WALKTHROUGH_IDS)[number]
 
 /**
@@ -267,6 +269,18 @@ export type Walkthrough = {
   /** What the student should have ready before starting. */
   bringWithYou: string[]
   steps: WalkthroughStep[]
+  /**
+   * Present only on a walkthrough that ends in the student buying something.
+   *
+   * It carries the price, the shortcode and the channels to buy from, each with
+   * its own verification state — see `lib/epin/types.ts`. Absent for every other
+   * walkthrough, which is why nothing in the guide system has to know about it
+   * until it renders the panel.
+   *
+   * This is guidance about a purchase the student makes elsewhere. No walkthrough
+   * collects payment, and none may start to without this type changing first.
+   */
+  purchase?: EpinPurchase
 }
 
 /* -------------------------------------------------------------------------- */

@@ -119,6 +119,13 @@ export function CourseDiscovery() {
             Tell us the subjects you have and we&rsquo;ll search the admissions catalogue for
             programmes that list them. This finds options — it does not decide whether you qualify.
           </p>
+          <Link
+            href="/schools"
+            className="mt-2 inline-flex items-center gap-1 text-[0.9375rem] font-medium text-primary underline-offset-4 hover:underline"
+          >
+            Or browse every school in the catalogue
+            <ArrowRight aria-hidden className="size-4" />
+          </Link>
         </div>
       </div>
 
@@ -322,7 +329,7 @@ export function CourseDiscovery() {
             <AskCopilotButton
               suggestedQuestion={copilotContext}
               label="Ask about these options"
-              fallbackHref="/tickets/new?category=other"
+              counselorHref="/tickets/new?category=other"
             />
           </div>
         </div>
@@ -333,7 +340,7 @@ export function CourseDiscovery() {
               selected.length ? selected.map(subjectName).join(', ') : '[not entered yet]'
             }. Suggest relevant programmes from the admissions catalogue and cite where each one comes from. Do not tell me I qualify — tell me to verify in current JAMB IBASS and then use the eligibility checker for a reviewed verdict.`}
             label="Explore matching courses"
-            fallbackHref="/tickets/new?category=other"
+            counselorHref="/tickets/new?category=other"
           />
         </div>
       )}

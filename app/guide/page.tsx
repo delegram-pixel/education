@@ -10,7 +10,7 @@ import { listWalkthroughs } from '@/lib/db/queries'
 export const metadata: Metadata = {
   title: 'Registration guides',
   description:
-    'Step-by-step walkthroughs of JAMB registration and UNILAG POST-UTME screening, with the parts people usually get stuck on called out.',
+    'Step-by-step walkthroughs of JAMB registration, buying your JAMB e-PIN, and UNILAG POST-UTME screening, with the parts people usually get stuck on called out.',
 }
 
 export default async function GuideIndexPage() {

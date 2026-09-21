@@ -107,3 +107,22 @@ export const SAMPLE_CATALOGUE_PROGRAMMES: SwiftKnowledgeProgramme[] = ROWS.map((
   sourceUpdatedAt: SAMPLE_DATE,
   reviewedCourseId: null,
 }))
+
+/**
+ * State and type for the institutions the sample rows belong to.
+ *
+ * IBASS carries both on every institution record; a row written by hand has
+ * neither, which would put every sample school under "state not recorded" and
+ * leave the by-state view — the reason institutions are listed at all — showing
+ * nothing offline. These are plain facts about three federal universities, not
+ * invented data, but they are still ours to state: a real state and type arrive
+ * from IBASS with the rest of the row.
+ */
+export const SAMPLE_INSTITUTION_DETAILS: Record<
+  string,
+  { state: string; institutionType: string }
+> = {
+  [UNILAG]: { state: 'Lagos', institutionType: 'University' },
+  [UI]: { state: 'Oyo', institutionType: 'University' },
+  [OAU]: { state: 'Osun', institutionType: 'University' },
+}

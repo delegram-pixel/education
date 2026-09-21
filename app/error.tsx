@@ -31,7 +31,8 @@ export default function GlobalError({
         </Button>
         <AskCopilotButton
           suggestedQuestion="The application showed an error while I was trying to complete an admission task. Can you help me continue?"
-          label="Ask a counselor instead"
+          label="Ask about this error"
+          counselorLabel="Send this to a counselor"
         />
       </div>
       {error.digest ? (

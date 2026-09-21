@@ -256,6 +256,10 @@ export function VerdictCard({
           size="lg"
           suggestedQuestion={`I checked my O'level results against ${course.name} at ${course.institutionShort} and the result said: "${verdict.explanation}" Can you explain what I should do next?`}
           label="Ask why"
+          // The dispute hatch below is this screen's human route, and it carries
+          // far better context than a generic link would. Two counselor doors
+          // side by side would just be noise.
+          counselorLabel={null}
         />
 
         {shareId ? (
