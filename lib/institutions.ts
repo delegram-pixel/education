@@ -110,14 +110,68 @@ export function groupByState(institutions: CatalogueInstitution[]): InstitutionG
     })
 }
 
-/** Whether this institution matches the typed query, ignoring case. */
+/**
+ * Whether this institution matches the typed query, ignoring case.
+ *
+ * The comparison runs on `nameKey` of both sides, not on the raw strings. IBASS
+ * writes names the way institutions write them, punctuation and all, and a
+ * student types the way people type: "University of Port Harcourt" has to find
+ * `UNIVERSITY OF PORT-HARCOURT, RIVERS STATE`, and "Usmanu Danfodiyo" (one
+ * space) has to find `USMANU  DANFODIYO UNIVERSITY` (two). A raw substring match
+ * finds neither, and a school that cannot be found is indistinguishable from a
+ * school that is not there.
+ *
+ * `needle` is expected to be `nameKey`d already — the callers compute it once
+ * for the whole pass rather than per row.
+ */
 function matchesQuery(institution: CatalogueInstitution, needle: string): boolean {
   return (
-    institution.name.toLowerCase().includes(needle) ||
-    (institution.state?.toLowerCase().includes(needle) ?? false) ||
-    (institution.institutionType?.toLowerCase().includes(needle) ?? false)
+    nameKey(institution.name).includes(needle) ||
+    nameKey(institution.state ?? '').includes(needle) ||
+    nameKey(institution.institutionType ?? '').includes(needle)
   )
 }
+
+/**
+ * How well a name answers the query. Higher is a better answer.
+ *
+ * Ranking by programme count alone puts a college of education above the
+ * university a student asked for by name — "University of Ibadan" returned
+ * seminaries and colleges that merely mention Ibadan, because at the time the
+ * mirror held programme counts for those and none for the university. Where the
+ * match falls in the name is the signal that does not depend on how far an
+ * import has got.
+ */
+function matchRank(institution: CatalogueInstitution, needle: string): number {
+  if (!needle) return 0
+
+  const name = nameKey(institution.name)
+  if (name.startsWith(needle)) return 3
+  // A space ahead of it means the query begins a word, which is as close to a
+  // match on the school's own name as "Ibadan" gets for "University of Ibadan".
+  if (name.includes(` ${needle}`)) return 2
+  if (name.includes(needle)) return 1
+  // Reached only through the state or the type.
+  return 0
+}
+
+/**
+ * Relevance first, then the fuller record.
+ *
+ * The programme count is what tells "University of Lagos" apart from the twenty
+ * other schools with Lagos in the name, so it is kept — but only *within* a rank.
+ * Letting it outrank the match put a college of education above the university
+ * someone had just named in full, because the mirror held programme counts for
+ * the college and none yet for the university.
+ */
+function byRelevance(
+  a: CatalogueInstitution,
+  b: CatalogueInstitution,
+  needle: string,
+): number {
+  return matchRank(b, needle) - matchRank(a, needle) || byWeight(a, b)
+}
+
 
 /**
  * Institutions matching a typed query, on name, state or type.
@@ -129,7 +183,7 @@ export function searchInstitutions(
   institutions: CatalogueInstitution[],
   query: string,
 ): CatalogueInstitution[] {
-  const needle = query.trim().toLowerCase()
+  const needle = nameKey(query)
   if (!needle) return institutions
 
   return institutions.filter((institution) => matchesQuery(institution, needle))
@@ -179,7 +233,7 @@ export function filterInstitutions(
 ): CatalogueInstitution[] {
   if (!hasActiveFilters(filters)) return institutions
 
-  const needle = filters.query.trim().toLowerCase()
+  const needle = nameKey(filters.query)
   return institutions.filter((institution) => matchesFilters(institution, filters, needle))
 }
 
@@ -199,7 +253,7 @@ export function institutionFacets(
   institutions: CatalogueInstitution[],
   filters: InstitutionFilters,
 ): InstitutionFacets {
-  const needle = filters.query.trim().toLowerCase()
+  const needle = nameKey(filters.query)
 
   return {
     state: facetOptions(institutions, filters, needle, 'state', stateOption, compareStates),
@@ -317,13 +371,22 @@ export function suggestInstitutions(
   reviewedKeys: ReadonlySet<string>,
   limit = 40,
 ): InstitutionSuggestions {
+  const needle = nameKey(filters.query)
+
   const matched = filterInstitutions(institutions, filters)
     .map((institution) => ({
       institution,
       reviewed: isReviewedInstitution(institution, reviewedKeys),
     }))
+    // An empty query has no relevance to judge, so the fullest records lead —
+    // that is what makes the untouched dropdown a useful starting list. Once
+    // something has been typed, the name is the query and the name decides.
     .sort(
-      (a, b) => Number(b.reviewed) - Number(a.reviewed) || byWeight(a.institution, b.institution),
+      (a, b) =>
+        Number(b.reviewed) - Number(a.reviewed) ||
+        (needle
+          ? byRelevance(a.institution, b.institution, needle)
+          : byWeight(a.institution, b.institution)),
     )
 
   const reviewed = matched.filter((entry) => entry.reviewed)

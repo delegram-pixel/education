@@ -76,6 +76,84 @@ describe('searchInstitutions', () => {
       'University of Ibadan',
     ])
   })
+
+  // IBASS writes names the way institutions write them; students type the way
+  // people type. A raw substring match loses schools both ways, and a school
+  // that cannot be found looks exactly like a school that is not there.
+  it('finds a hyphenated name typed with a space', () => {
+    const rows = [institution({ name: 'UNIVERSITY OF PORT-HARCOURT, RIVERS STATE' })]
+
+    expect(searchInstitutions(rows, 'university of port harcourt')).toHaveLength(1)
+  })
+
+  it('finds a name typed with the punctuation it was written with', () => {
+    const rows = [institution({ name: 'UNIVERSITY OF PORT HARCOURT, RIVERS STATE' })]
+
+    expect(searchInstitutions(rows, 'port-harcourt')).toHaveLength(1)
+  })
+
+  it('finds a name with doubled spaces typed with one', () => {
+    const rows = [institution({ name: 'USMANU  DANFODIYO UNIVERSITY, SOKOTO, SOKOTO STATE' })]
+
+    expect(searchInstitutions(rows, 'usmanu danfodiyo')).toHaveLength(1)
+  })
+
+  it('still matches on the state', () => {
+    const rows = [institution({ name: 'Alpha', state: 'Oyo' })]
+
+    expect(searchInstitutions(rows, 'oyo')).toHaveLength(1)
+  })
+})
+
+describe('suggestInstitutions ranking', () => {
+  const reviewedKeys = new Set<string>()
+
+  function names(rows: CatalogueInstitution[], query: string): string[] {
+    const result = suggestInstitutions(rows, { ...NO_FILTERS, query }, reviewedKeys)
+    return [...result.reviewed, ...result.listings].map((entry) => entry.institution.name)
+  }
+
+  // The regression that prompted these: the university a student named in full
+  // sat behind institutions that merely mention it, because the mirror held
+  // programme counts for those and none yet for the university.
+  it('puts the school named in full above one that merely mentions it', () => {
+    const rows = [
+      institution({
+        name: 'DON BOSCO INSTITUTE OF PHILOSOPHY (AFFILIATED TO UNIVERSITY OF IBADAN)',
+        programmeCount: 90,
+      }),
+      institution({ name: 'UNIVERSITY OF IBADAN, IBADAN, OYO STATE', programmeCount: 0 }),
+    ]
+
+    expect(names(rows, 'university of ibadan')[0]).toBe('UNIVERSITY OF IBADAN, IBADAN, OYO STATE')
+  })
+
+  it('puts a name that opens with the query above one that only contains it', () => {
+    const rows = [
+      institution({ name: 'UNIVERSITY OF LAGOS, LAGOS STATE', programmeCount: 90 }),
+      institution({ name: 'LAGOS STATE UNIVERSITY, OJO', programmeCount: 5 }),
+    ]
+
+    expect(names(rows, 'lagos')[0]).toBe('LAGOS STATE UNIVERSITY, OJO')
+  })
+
+  it('falls back to the fuller record within one rank', () => {
+    const rows = [
+      institution({ name: 'Alpha University', programmeCount: 4 }),
+      institution({ name: 'Alpha Polytechnic', programmeCount: 90 }),
+    ]
+
+    expect(names(rows, 'alpha')).toEqual(['Alpha Polytechnic', 'Alpha University'])
+  })
+
+  it('leads with the fullest records while nothing has been typed', () => {
+    const rows = [
+      institution({ name: 'Alpha University', programmeCount: 4 }),
+      institution({ name: 'Zeta Polytechnic', programmeCount: 90 }),
+    ]
+
+    expect(names(rows, '')).toEqual(['Zeta Polytechnic', 'Alpha University'])
+  })
 })
 
 describe('filterInstitutions', () => {

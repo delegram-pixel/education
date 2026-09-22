@@ -10,15 +10,27 @@ import { loadEnvLocal } from '../lib/db/load-env'
 loadEnvLocal()
 
 import { neon } from '@neondatabase/serverless'
+import { count, sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/neon-http'
 
 import { catalogueInstitutions, catalogueProgrammes } from '../lib/db/schema'
+import { nameKey } from '../lib/discovery'
 
 const API = 'https://ibass-api.jamb.gov.ng/api'
 const BROCHURE_URL = 'https://ibass.jamb.gov.ng/brochure-by-institution'
 const REQUEST_PAUSE_MS = 200
 const REQUEST_TIMEOUT_MS = 60_000
 const MAX_REQUEST_ATTEMPTS = 4
+
+/**
+ * How many programme rows go into one upsert.
+ *
+ * Each row is ten columns, so this is around two thousand bind parameters —
+ * comfortably inside every limit that matters. Schools average a few dozen
+ * programmes, so most fit in a single statement and the batch size only bites on
+ * the largest.
+ */
+const PROGRAMME_BATCH_SIZE = 200
 
 type ApiRecord = Record<string, unknown>
 
@@ -147,8 +159,41 @@ function pages(payload: ApiRecord): number {
   return 1
 }
 
+/** How many records IBASS says this collection holds in total. */
+function totalRecords(payload: ApiRecord): number {
+  const root = payload.data
+  if (root && typeof root === 'object') return Number((root as ApiRecord).total ?? 0)
+  return 0
+}
+
 function valueForFilter(item: ApiRecord): string {
   return pick(item, 'id', 'value', 'title', 'name') ?? ''
+}
+
+/**
+ * Universities before everything else, IBASS's own order preserved inside each.
+ *
+ * This pass runs for hours, and the order it runs in decides which schools are
+ * usable while it does. IBASS's order is arbitrary with respect to what anyone
+ * searches for: of the 529 degree-awarding institutions, 212 are colleges and
+ * seminaries grouped under "other", interleaved with the universities a student
+ * is overwhelmingly more likely to look for. Sorting by that one word costs
+ * nothing and means the schools that matter are complete early rather than last.
+ *
+ * Needs the type's categories because an institution carries its category's id,
+ * not its name — the title that says "FEDERAL UNIVERSITIES" lives in the
+ * category record, resolved the same way the institution row is built. A stable
+ * sort, so within a tier the original order still holds.
+ */
+function universityFirst(categories: ApiRecord[]): (a: ApiRecord, b: ApiRecord) => number {
+  function isUniversity(institution: ApiRecord): boolean {
+    const categoryId = pick(institution, 'inst_category', 'category_id', 'category')
+    const category = categories.find((item) => valueForFilter(item) === categoryId)
+    const label = pick(category ?? {}, 'title', 'name') ?? categoryId ?? ''
+    return label.toUpperCase().includes('UNIVERSIT')
+  }
+
+  return (a, b) => Number(isUniversity(b)) - Number(isUniversity(a))
 }
 
 async function main() {
@@ -163,15 +208,26 @@ async function main() {
   // silently import nothing. With RESUME=1 a run that died partway can simply be
   // restarted, and it will redo only what it had not finished.
   //
-  // Completion is judged by whether programmes exist, not by the institution
-  // row. The institution insert happens first, so an institution interrupted
-  // between the two writes is correctly redone from scratch rather than skipped.
-  const alreadyImported =
+  // Completion is judged by programmes, not by the institution row. The
+  // institution insert happens first, so an institution interrupted between the
+  // two writes is redone rather than skipped.
+  //
+  // A COUNT, not a yes/no. "Has any programme" looks like it means "is done",
+  // and it does not: an institution interrupted partway through its pages keeps
+  // whatever landed and is then skipped by every later run. Ahmadu Bello
+  // University sat at 15 of IBASS's 118 that way — the mirror looked imported
+  // and the gap could never close. Comparing against the total IBASS reports
+  // makes the check exact, and costs one page-one request we were making
+  // anyway.
+  const storedCounts =
     process.env.RESUME === '1'
-      ? new Set(
-          (await db.select({ id: catalogueProgrammes.institutionId }).from(catalogueProgrammes)).map(
-            (row) => row.id,
-          ),
+      ? new Map(
+          (
+            await db
+              .select({ id: catalogueProgrammes.institutionId, total: count() })
+              .from(catalogueProgrammes)
+              .groupBy(catalogueProgrammes.institutionId)
+          ).map((row) => [row.id, Number(row.total)]),
         )
       : null
   let skippedCount = 0
@@ -222,6 +278,52 @@ async function main() {
   const perType = new Map<string, { institutions: number; programmes: number }>()
   const typeLabels = new Map<string, string>()
 
+  /**
+   * Import only the schools named here — `SCHOOL="university of lagos, rivers state"`.
+   *
+   * The full sweep is hours, and the schools a student is most likely to look
+   * for are not the ones IBASS lists first. Naming them turns "wait for all 529"
+   * into "have the ones that matter now" — the same trade the `TYPE` filter makes
+   * one level up, and the two compose.
+   *
+   * A name is folded through the app's own `nameKey` before comparing, so a
+   * school typed the way a person types it matches the row IBASS actually
+   * writes: case, hyphens and doubled spaces all fold away, and "University of
+   * Port Harcourt" finds `UNIVERSITY OF PORT-HARCOURT, RIVERS STATE`. JAMB's
+   * numeric id works too. Sharing the fold rather than reimplementing it is
+   * deliberate — a search that disagrees with the import is how a school ends up
+   * unfindable while looking present.
+   */
+  const schoolNeedles = (process.env.SCHOOL ?? '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean)
+
+  const matchedCounts = new Map<string, number>()
+
+  function schoolWanted(institution: ApiRecord): boolean {
+    if (!schoolNeedles.length) return true
+
+    const id = pick(institution, 'id', 'institution_id')
+    const name = nameKey(pick(institution, 'title', 'name', 'institution_name') ?? '')
+
+    let wanted = false
+    // Deliberately not `some`: every needle is checked so the summary can say
+    // how many schools each name pulled in. One name commonly matches several —
+    // "University of Ibadan" also matches the colleges affiliated to it — and
+    // that is worth stating outright rather than leaving to be discovered in the
+    // institution count.
+    for (const needle of schoolNeedles) {
+      const folded = nameKey(needle)
+      const hit = (id !== null && id === needle.trim()) || (folded !== '' && name.includes(folded))
+      if (!hit) continue
+      wanted = true
+      matchedCounts.set(needle, (matchedCounts.get(needle) ?? 0) + 1)
+    }
+
+    return wanted
+  }
+
   for (const type of selected) {
     const institutionType = valueForFilter(type)
     typeLabels.set(institutionType, pick(type, 'title', 'name') ?? institutionType)
@@ -250,15 +352,31 @@ async function main() {
       )
     }
 
-    for (const institution of allInstitutions) {
+    // Narrowed here, once, so both passes below work from the same list. The
+    // full type is still fetched — IBASS has no name search on this endpoint we
+    // can rely on, and twenty pages of institution rows is a second, not the
+    // bottleneck.
+    const wanted = allInstitutions.filter(schoolWanted).sort(universityFirst(categories))
+
+    /**
+     * Institutions first, as a pass of their own.
+     *
+     * The rows are written before any programme is fetched, so the school list
+     * becomes complete within seconds of a type starting rather than arriving one
+     * school at a time behind its own programmes. Fetching a school's programmes
+     * before writing the school means the school is invisible until the last of
+     * them lands — around two minutes each, which puts a usable list of
+     * universities hours away and makes an interrupted run look like it did
+     * nothing at all.
+     *
+     * This does not weaken `RESUME=1`. Completion is still judged by whether
+     * programmes exist, so a school written here and interrupted before its
+     * programmes are fetched is redone by the second pass rather than skipped.
+     */
+    for (const institution of wanted) {
       const institutionId = pick(institution, 'id', 'institution_id')
       const name = pick(institution, 'title', 'name', 'institution_name')
       if (!institutionId || !name) continue
-
-      if (alreadyImported?.has(institutionId)) {
-        skippedCount += 1
-        continue
-      }
 
       const categoryId = pick(institution, 'inst_category', 'category_id', 'category')
       const category = categories.find((item) => valueForFilter(item) === categoryId)
@@ -280,51 +398,125 @@ async function main() {
       institutionCount += 1
       const tally = perType.get(institutionType)
       if (tally) tally.institutions += 1
+    }
+
+    for (const institution of wanted) {
+      const institutionId = pick(institution, 'id', 'institution_id')
+      const name = pick(institution, 'title', 'name', 'institution_name')
+      if (!institutionId || !name) continue
 
       const programmeFirstPage = await request(`/ibass/institution/programmes/${institutionId}?page=1`, {
         course_search: '',
       })
       const programmePages = pages(programmeFirstPage)
       const programmes = records(programmeFirstPage)
+
+      // Page one is fetched before this decision either way, so resuming costs
+      // one request per institution and saves every page beyond the first —
+      // which, for the two thirds of schools with more than one page, is most of
+      // the work. An institution whose stored count disagrees with IBASS is
+      // re-imported in full: the pages are upserts, so redoing one is safe, and
+      // a partial school is worse than a repeated fetch.
+      if (storedCounts?.get(institutionId) === totalRecords(programmeFirstPage)) {
+        skippedCount += 1
+        continue
+      }
+
       for (let page = 2; page <= programmePages; page += 1) {
         await new Promise((resolve) => setTimeout(resolve, REQUEST_PAUSE_MS))
         programmes.push(...records(await request(`/ibass/institution/programmes/${institutionId}?page=${page}`, { course_search: '' })))
       }
 
-      for (const programme of programmes) {
+      const rows = programmes.flatMap((programme) => {
         const programmeId = pick(programme, 'id', 'programme_id', 'course_id')
         const programmeName = pick(programme, 'title', 'name', 'programme')
-        if (!programmeId || !programmeName) continue
-        const row = {
-          id: `${institutionId}:${programmeId}`,
-          institutionId,
-          name: programmeName,
-          department: pick(programme, 'department', 'faculty'),
-          status: pick(programme, 'status'),
-          utmeSubjects: stringList(programme.utme_subjects ?? programme.utmeSubjects ?? programme.subjects),
-          olevelRequirements: pick(programme, 'utme_requirements', 'olevel_requirements', 'o_level_requirements'),
-          directEntryRequirements: pick(programme, 'de_requirements', 'direct_entry_requirements'),
-          remarks: pick(programme, 'remarks', 'remark'),
-          sourceUrl: BROCHURE_URL,
-          sourceUpdatedAt: importedAt,
-        }
+        if (!programmeId || !programmeName) return []
+        return [
+          {
+            id: `${institutionId}:${programmeId}`,
+            institutionId,
+            name: programmeName,
+            department: pick(programme, 'department', 'faculty'),
+            status: pick(programme, 'status'),
+            utmeSubjects: stringList(
+              programme.utme_subjects ?? programme.utmeSubjects ?? programme.subjects,
+            ),
+            olevelRequirements: pick(
+              programme,
+              'utme_requirements',
+              'olevel_requirements',
+              'o_level_requirements',
+            ),
+            directEntryRequirements: pick(programme, 'de_requirements', 'direct_entry_requirements'),
+            remarks: pick(programme, 'remarks', 'remark'),
+            sourceUrl: BROCHURE_URL,
+            sourceUpdatedAt: importedAt,
+          },
+        ]
+      })
+
+      for (let start = 0; start < rows.length; start += PROGRAMME_BATCH_SIZE) {
+        const batch = rows.slice(start, start + PROGRAMME_BATCH_SIZE)
         await write(() =>
           db
             .insert(catalogueProgrammes)
-            .values(row)
-            .onConflictDoUpdate({ target: catalogueProgrammes.id, set: row }),
+            .values(batch)
+            // A multi-row upsert cannot reuse the inserted values as the update
+            // set — the literal would be applied to whichever row conflicted.
+            // `excluded` is the row being inserted, which is what a single-row
+            // upsert means by `set: row`.
+            .onConflictDoUpdate({
+              target: catalogueProgrammes.id,
+              set: {
+                institutionId: sql`excluded.institution_id`,
+                name: sql`excluded.name`,
+                department: sql`excluded.department`,
+                status: sql`excluded.status`,
+                utmeSubjects: sql`excluded.utme_subjects`,
+                olevelRequirements: sql`excluded.olevel_requirements`,
+                directEntryRequirements: sql`excluded.direct_entry_requirements`,
+                remarks: sql`excluded.remarks`,
+                sourceUrl: sql`excluded.source_url`,
+                sourceUpdatedAt: sql`excluded.source_updated_at`,
+              },
+            }),
         )
-        programmeCount += 1
-        const programmeTally = perType.get(institutionType)
-        if (programmeTally) programmeTally.programmes += 1
       }
+
+      programmeCount += rows.length
+      const programmeTally = perType.get(institutionType)
+      if (programmeTally) programmeTally.programmes += rows.length
     }
   }
 
   const skipped = skippedCount ? ` Skipped ${skippedCount} already imported.` : ''
+  const narrowed = schoolNeedles.length
+    ? ` Narrowed to ${schoolNeedles.length} named school(s).`
+    : ''
   console.log(
-    `Imported ${institutionCount} institutions and ${programmeCount} programmes from JAMB IBASS.${skipped}`,
+    `Imported ${institutionCount} institutions and ${programmeCount} programmes from JAMB IBASS.${skipped}${narrowed}`,
   )
+
+  /**
+   * What each named school actually pulled in.
+   *
+   * `SCHOOL=` is the filter most likely to be given a name that does not exist
+   * as written, and the failure is silent — the run reports success and imports
+   * nothing for it. Saying how many institutions each name matched is the
+   * difference between a typo and a bug, and it also shows when one name is
+   * broader than intended.
+   */
+  if (schoolNeedles.length) {
+    console.log('\nNamed schools:')
+    for (const needle of schoolNeedles) {
+      const matched = matchedCounts.get(needle) ?? 0
+      console.log(
+        matched
+          ? `  ${needle}: ${matched} institution(s)`
+          : `  ${needle}: NOTHING MATCHED — check the spelling, or look the name up on /schools`,
+      )
+    }
+  }
 
   console.log('\nBy institution type:')
   for (const [id, tally] of perType) {

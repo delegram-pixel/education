@@ -118,13 +118,14 @@ yarn catalogue:sync
 yarn catalogue:status
 ```
 
-The full import takes hours and can be stopped and restarted at any point. Two environment
+The full import takes hours and can be stopped and restarted at any point. Three environment
 variables control it:
 
 | Variable | Effect |
 | --- | --- |
-| `RESUME=1` | Skip institutions that already have programmes, so an interrupted run continues instead of starting over. |
+| `RESUME=1` | Skip schools already imported in full. A school holding fewer programmes than IBASS reports is re-imported, so a run that was interrupted partway repairs itself instead of staying partial. |
 | `TYPE=<id or name>` | Import one institution type only — `TYPE=4`, or `TYPE=degree`. Matches on the type's id or its title. |
+| `SCHOOL=<names>` | Import only the schools named, comma-separated — `SCHOOL="university of lagos, rivers state"`. Names are matched loosely (case, hyphens and doubled spaces fold away, and JAMB's numeric id works), so one name can match several institutions; the run reports how many each name matched. |
 
 **Run it per type, and check `catalogue:status` between runs.** IBASS lists its types in a fixed
 order with degree-awarding institutions last, so a run that is stopped partway loses exactly the
@@ -132,13 +133,21 @@ schools most students are looking for. The mirror once reached 839 institutions 
 university that way: the types ahead of it succeeded, so the run looked healthy.
 
 ```bash
-RESUME=1 TYPE=degree yarn catalogue:sync   # universities
-yarn catalogue:status                       # confirm the count moved
+RESUME=1 TYPE=degree yarn catalogue:sync                    # all 529 degree institutions
+SCHOOL="university of lagos, rivers state" TYPE=degree yarn catalogue:sync   # just these
+yarn catalogue:status                                        # confirm the count moved
 ```
+
+Universities are imported before colleges and seminaries within a type, so the schools a student is
+most likely to search for are complete early rather than at the end of a multi-hour run.
 
 `catalogue:status` groups by institution type for that reason, and reports any institution with no
 programmes and when the mirror was last written. A run that imports nothing for a type it was asked
 for says so outright rather than reporting a healthy total.
+
+<small>Measured 2026-09-22: the programme pass costs roughly 3s per IBASS page, which is the floor
+per school. Batching the database writes cut the per-school time from about 5 minutes to about 20
+seconds; the remaining cost is upstream latency, not the mirror.</small>
 
 Run the sync on a scheduled server job to keep the mirror fresh. Once deployed, add this URL as a **website knowledge source** in the Swift Agents dashboard:
 
