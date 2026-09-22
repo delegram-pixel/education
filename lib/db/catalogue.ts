@@ -116,10 +116,18 @@ function sampleInstitutions(programmes: SwiftKnowledgeProgramme[]): CatalogueIns
 }
 
 /**
- * The document Swift indexes. It never silently turns a national catalogue row
- * into an automated decision: that remains limited to reviewed `courses`.
+ * Read programme rows, optionally narrowed to a single institution.
+ *
+ * One reader rather than two, so the column list, the join and the sample
+ * fallback exist once and cannot drift apart between the whole-catalogue view
+ * and the per-institution one.
+ *
+ * The narrowing happens in SQL. The national catalogue runs past twelve thousand
+ * programmes, and pulling every one of them across the wire to render a single
+ * school's thirty is the kind of mistake that costs nothing at three sample rows
+ * and a great deal at full size.
  */
-export async function listSwiftKnowledgeProgrammes(): Promise<{
+async function readProgrammes(institutionName?: string): Promise<{
   programmes: SwiftKnowledgeProgramme[]
   source: 'ibass' | 'sample'
 }> {
@@ -140,15 +148,39 @@ export async function listSwiftKnowledgeProgrammes(): Promise<{
         })
         .from(catalogueProgrammes)
         .innerJoin(catalogueInstitutions, eq(catalogueProgrammes.institutionId, catalogueInstitutions.id))
+        .where(institutionName ? eq(catalogueInstitutions.name, institutionName) : undefined)
         .orderBy(asc(catalogueInstitutions.name), asc(catalogueProgrammes.name))
 
-      if (rows.length) return { programmes: rows, source: 'ibass' }
+      // An empty result means opposite things in the two cases. Across the whole
+      // catalogue it means the mirror holds nothing and the sample rows are the
+      // honest answer. For one institution it means the mirror is fine and this
+      // school simply has no programme detail in it — so it is returned as IBASS
+      // and left empty, rather than papered over with sample rows that would
+      // credit us with knowing something we do not.
+      if (rows.length || institutionName) return { programmes: rows, source: 'ibass' }
     } catch (error) {
       console.warn('[catalogue] Could not read IBASS mirror:', error)
     }
   }
 
-  return { source: 'sample', programmes: sampleProgrammes() }
+  const sample = sampleProgrammes()
+  return {
+    source: 'sample',
+    programmes: institutionName
+      ? sample.filter((programme) => programme.institution === institutionName)
+      : sample,
+  }
+}
+
+/**
+ * The document Swift indexes. It never silently turns a national catalogue row
+ * into an automated decision: that remains limited to reviewed `courses`.
+ */
+export async function listSwiftKnowledgeProgrammes(): Promise<{
+  programmes: SwiftKnowledgeProgramme[]
+  source: 'ibass' | 'sample'
+}> {
+  return readProgrammes()
 }
 
 /**
@@ -204,7 +236,8 @@ export async function listInstitutions(): Promise<{
  * carries JAMB's identifier, so a sample row we wrote ourselves would be
  * unreachable by id and the offline path would show every school as empty. Names
  * in the brochure are the institution's own and distinguish branches, so this
- * holds on both paths.
+ * holds on both paths. The match is applied in SQL by `readProgrammes`, not by
+ * filtering a whole-catalogue read in memory.
  *
  * Reviewed courses are resolved here the same way the subject search resolves
  * them, via the shared index, so a programme offers a link into the checker in
@@ -215,16 +248,15 @@ export async function listProgrammesForInstitution(institutionName: string): Pro
   source: 'ibass' | 'sample'
 }> {
   const [{ programmes, source }, { data: courses }] = await Promise.all([
-    listSwiftKnowledgeProgrammes(),
+    readProgrammes(institutionName),
     listCourses(),
   ])
 
   const reviewed = reviewedCourseIndex(courses)
-  const wanted = programmes.filter((programme) => programme.institution === institutionName)
 
   return {
     source,
-    programmes: wanted.map((programme) => ({
+    programmes: programmes.map((programme) => ({
       ...programme,
       reviewedCourseId:
         programme.reviewedCourseId ??

@@ -1,12 +1,15 @@
 import type { Metadata } from 'next'
 
 import { CheckFlow } from '@/components/eligibility/check-flow'
-import { CoursePicker } from '@/components/eligibility/course-picker'
+import { SchoolCoursePicker } from '@/components/eligibility/school-course-picker'
 import { AdmissionSafetyNotice } from '@/components/shared/admission-safety-notice'
 import { CourseDiscovery } from '@/components/swift/course-discovery'
 import { Reveal } from '@/components/shared/reveal'
 import { Badge } from '@/components/ui/badge'
+import { SAMPLE_INSTITUTION_DETAILS } from '@/lib/db/catalogue.data'
+import { listInstitutions } from '@/lib/db/catalogue'
 import { findCourse, listCourses } from '@/lib/db/queries'
+import { reviewedInstitutionKeys, withReviewedInstitutions } from '@/lib/institutions'
 import { listSubjects } from '@/lib/types'
 
 export const metadata: Metadata = {
@@ -54,15 +57,24 @@ export default async function CheckPage({
     )
   }
 
-  const { data: courses, degraded } = await listCourses()
+  const [{ data: courses, degraded }, { institutions }] = await Promise.all([
+    listCourses(),
+    listInstitutions(),
+  ])
+
+  // The catalogue plus any school we have reviewed a course at but IBASS has not
+  // mirrored. Without this the one school the checker can decide on can be the
+  // one school it cannot offer.
+  const schools = withReviewedInstitutions(institutions, courses, SAMPLE_INSTITUTION_DETAILS)
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
       <Reveal>
         <h1 className="text-[2rem] sm:text-[2.5rem]">Choose your school and course</h1>
         <p className="mt-3 max-w-2xl text-[1.0625rem] text-muted">
-          Choose the institution first, then the course you want to check. We&rsquo;ll only show
-          courses that belong to that school.
+          Pick the school you have in mind, then the course you want to check. We can give you a
+          verdict on the courses we have reviewed; the rest are listings, and we say so rather than
+          guess.
         </p>
       </Reveal>
 
@@ -71,7 +83,11 @@ export default async function CheckPage({
       </Reveal>
 
       <Reveal>
-        <CoursePicker courses={courses} />
+        <SchoolCoursePicker
+          institutions={schools}
+          reviewedKeys={[...reviewedInstitutionKeys(courses)]}
+          reviewedCourses={courses}
+        />
       </Reveal>
 
       <Reveal delay={90}>

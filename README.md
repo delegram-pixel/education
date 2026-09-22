@@ -98,7 +98,9 @@ yarn test
 yarn db:push
 yarn db:studio
 yarn db:seed
+yarn catalogue:prepare
 yarn catalogue:sync
+yarn catalogue:status
 ```
 
 ## Nigeria-wide catalogue for Swift Agents
@@ -113,7 +115,30 @@ To import the official JAMB IBASS institution and programme catalogue, run:
 ```bash
 yarn catalogue:prepare
 yarn catalogue:sync
+yarn catalogue:status
 ```
+
+The full import takes hours and can be stopped and restarted at any point. Two environment
+variables control it:
+
+| Variable | Effect |
+| --- | --- |
+| `RESUME=1` | Skip institutions that already have programmes, so an interrupted run continues instead of starting over. |
+| `TYPE=<id or name>` | Import one institution type only — `TYPE=4`, or `TYPE=degree`. Matches on the type's id or its title. |
+
+**Run it per type, and check `catalogue:status` between runs.** IBASS lists its types in a fixed
+order with degree-awarding institutions last, so a run that is stopped partway loses exactly the
+schools most students are looking for. The mirror once reached 839 institutions without a single
+university that way: the types ahead of it succeeded, so the run looked healthy.
+
+```bash
+RESUME=1 TYPE=degree yarn catalogue:sync   # universities
+yarn catalogue:status                       # confirm the count moved
+```
+
+`catalogue:status` groups by institution type for that reason, and reports any institution with no
+programmes and when the mirror was last written. A run that imports nothing for a type it was asked
+for says so outright rather than reporting a healthy total.
 
 Run the sync on a scheduled server job to keep the mirror fresh. Once deployed, add this URL as a **website knowledge source** in the Swift Agents dashboard:
 
@@ -121,7 +146,7 @@ Run the sync on a scheduled server job to keep the mirror fresh. Once deployed, 
 https://your-domain.example/api/swift/knowledge
 ```
 
-The endpoint is plain Markdown, includes the source link for every programme, and labels the fallback sample data if the national catalogue has not been imported. JAMB identifies IBASS as the official e-brochure and eligibility source; students should still verify the current session in IBASS and the institution's own bulletin.
+The endpoint is plain Markdown, carries the source link for each programme it lists, and labels the fallback sample data if the national catalogue has not been imported. Because the national catalogue runs past twelve thousand programmes, the programme section is capped at the first 500 and says so in the document itself — Swift is told that a programme missing from it is outside the sample, not evidence that an institution does not offer it. The institution list is complete. JAMB identifies IBASS as the official e-brochure and eligibility source; students should still verify the current session in IBASS and the institution's own bulletin.
 
 ## Project structure
 - `app/` — Next.js routes and application pages

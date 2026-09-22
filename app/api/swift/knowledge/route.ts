@@ -4,6 +4,16 @@ import { groupByState } from '@/lib/institutions'
 export const revalidate = 3600
 
 /**
+ * How many programme records the document carries.
+ *
+ * The Institutions section below is complete — 466 schools is tens of kilobytes
+ * — and answers most school-level questions on its own. Programme detail is the
+ * part that does not scale, so it is sampled. Depth belongs in the app, where
+ * the catalogue is queried one school at a time instead of shipped whole.
+ */
+const MAX_PROGRAMME_ENTRIES = 500
+
+/**
  * A plain-text knowledge document for Swift's website knowledge source.
  * Add this public URL in Swift's dashboard after deployment. Keeping it as
  * Markdown makes it useful to a crawler and straightforward to audit.
@@ -15,7 +25,19 @@ export async function GET() {
   ])
   const generatedAt = new Date().toISOString()
 
-  const entries = programmes
+  // The national catalogue runs past twelve thousand programmes. Rendered in
+  // full that is megabytes of Markdown, and an oversized document does not
+  // degrade gracefully — the crawler rejects the whole thing and Swift is left
+  // with nothing. Capping keeps it indexable and states plainly what is missing,
+  // so a gap is never mistaken for an answer.
+  const listed = programmes.slice(0, MAX_PROGRAMME_ENTRIES)
+
+  const programmeNote =
+    programmes.length > listed.length
+      ? `The first ${listed.length} of ${programmes.length} programmes in the catalogue, ordered by institution. This is a sample, not the complete list: a programme absent from here is outside the sample, NOT evidence that the institution does not offer it. Never tell a student a school does not offer a programme because it is missing from this document.\n\n`
+      : ''
+
+  const entries = listed
     .map((programme) => {
       const details = [
         programme.department ? `Department: ${programme.department}` : null,
@@ -82,7 +104,7 @@ ${institutionEntries}
 
 ## Programmes
 
-${entries}\n`
+${programmeNote}${entries}\n`
 
   return new Response(body, {
     headers: {

@@ -179,11 +179,53 @@ async function main() {
   const types = records(await request('/inst-type'))
   if (!types.length) throw new Error('IBASS returned no institution types; the import was not changed.')
 
+  /**
+   * Import one type only, by id or by name — `TYPE=4`, `TYPE=degree`.
+   *
+   * The full import is hours long, and IBASS lists its types in a fixed order
+   * that puts degree-awarding institutions last. That makes the schools most
+   * students are looking for both the last to arrive and the first lost to an
+   * interrupted run — which is exactly how the mirror came to hold 839
+   * institutions without a single university. Naming one type turns that
+   * ordering from a consequence into a choice.
+   */
+  const only = process.env.TYPE?.trim().toLowerCase() ?? ''
+  const selected = only
+    ? types.filter((type) =>
+        [valueForFilter(type), pick(type, 'title', 'name') ?? ''].some((value) =>
+          value.toLowerCase().includes(only),
+        ),
+      )
+    : types
+
+  if (only && !selected.length) {
+    throw new Error(
+      `TYPE=${process.env.TYPE} matched no institution type. IBASS advertises: ${types
+        .map((type) => `${valueForFilter(type)}=${pick(type, 'title', 'name')}`)
+        .join(', ')}.`,
+    )
+  }
+
   let institutionCount = 0
   let programmeCount = 0
 
-  for (const type of types) {
+  /**
+   * What each advertised type actually produced.
+   *
+   * A single total for the run cannot say which type is missing, and a missing
+   * type is invisible: every other type succeeds, so the run looks healthy while
+   * an entire category — universities, in the case that prompted this — is
+   * absent. IBASS lists its types in a fixed order and this loop follows it, so
+   * the type at the end of the list is always the one lost when a run is cut
+   * short. Per-type counts turn that into something the run states outright.
+   */
+  const perType = new Map<string, { institutions: number; programmes: number }>()
+  const typeLabels = new Map<string, string>()
+
+  for (const type of selected) {
     const institutionType = valueForFilter(type)
+    typeLabels.set(institutionType, pick(type, 'title', 'name') ?? institutionType)
+    perType.set(institutionType, { institutions: 0, programmes: 0 })
     const categories = records(await request('/inst-category', { inst_type: institutionType }))
     // IBASS accepts a type-wide query with an empty category. Categories are
     // retained only as metadata; querying once prevents duplicate institutions.
@@ -236,6 +278,8 @@ async function main() {
           .onConflictDoUpdate({ target: catalogueInstitutions.id, set: row }),
       )
       institutionCount += 1
+      const tally = perType.get(institutionType)
+      if (tally) tally.institutions += 1
 
       const programmeFirstPage = await request(`/ibass/institution/programmes/${institutionId}?page=1`, {
         course_search: '',
@@ -271,6 +315,8 @@ async function main() {
             .onConflictDoUpdate({ target: catalogueProgrammes.id, set: row }),
         )
         programmeCount += 1
+        const programmeTally = perType.get(institutionType)
+        if (programmeTally) programmeTally.programmes += 1
       }
     }
   }
@@ -279,6 +325,31 @@ async function main() {
   console.log(
     `Imported ${institutionCount} institutions and ${programmeCount} programmes from JAMB IBASS.${skipped}`,
   )
+
+  console.log('\nBy institution type:')
+  for (const [id, tally] of perType) {
+    console.log(
+      `  ${typeLabels.get(id)}: ${tally.institutions} institutions, ${tally.programmes} programmes`,
+    )
+  }
+
+  /**
+   * Named outright rather than left to be noticed.
+   *
+   * This is reported rather than thrown because the import is long and
+   * resumable: a type at the end of the list is the one lost when a run is cut
+   * short, and that is the ordinary way this goes wrong. Throwing would replace
+   * a useful summary with a stack trace at the end of an hour of work, and the
+   * operator's next move — run it again with RESUME=1 — is the same either way.
+   */
+  const empty = [...perType].filter(([, tally]) => tally.institutions === 0)
+  if (empty.length) {
+    console.warn(
+      `\nWARNING: ${empty.length} advertised type(s) imported nothing: ${empty
+        .map(([id]) => `${typeLabels.get(id)} (inst_type=${id})`)
+        .join(', ')}. The mirror is incomplete — re-run with RESUME=1 to finish it.`,
+    )
+  }
 }
 
 main().catch((error) => {
