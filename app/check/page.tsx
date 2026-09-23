@@ -31,7 +31,7 @@ export default async function CheckPage({
         <header className="mb-8">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <Badge tone="primary">{course.institutionShort} &middot; {course.faculty}</Badge>
-            <UniversityPicker className="min-w-[14rem]" />
+            <UniversityPicker className="w-full sm:w-auto sm:min-w-[14rem]" />
           </div>
           <h1
             className="text-[2rem] sm:text-[2.5rem]"

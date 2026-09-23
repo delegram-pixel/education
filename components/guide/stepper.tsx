@@ -201,9 +201,9 @@ export function Stepper({ walkthrough }: { walkthrough: Walkthrough }) {
         </article>
 
         {/* Friction point #3: stuck on a specific step. */}
-        <div className="mt-6 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface p-4 shadow-card">
+        <div className="mt-6 flex flex-col gap-3 rounded-lg border border-border bg-surface p-4 shadow-card sm:flex-row sm:flex-wrap sm:items-center">
           <CircleHelp aria-hidden className="size-5 text-primary" />
-          <p className="flex-1 text-[0.9375rem] text-muted">
+          <p className="min-w-0 flex-1 text-[0.9375rem] text-muted">
             Screen not looking like this, or something not working?
           </p>
           <AskCopilotButton

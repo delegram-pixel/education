@@ -198,6 +198,7 @@
     line-height: 1.65;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    overflow-x: clip;
   }
 
   /* Paper grain. 2% opacity over a warm ground — reads as texture, not noise.

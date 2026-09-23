@@ -137,7 +137,7 @@ export function TicketThread({
           <li
             key={`${message.id}-${i}`}
             className={cn(
-              'animate-settle flex gap-3',
+              'animate-settle flex min-w-0 gap-3',
               message.author === 'student' && 'flex-row-reverse',
             )}
             style={{ animationDelay: `${i * 80}ms` }}
@@ -145,13 +145,13 @@ export function TicketThread({
             <Avatar author={message.author} name={message.authorName} />
             <div
               className={cn(
-                'max-w-[85%] rounded-lg border px-4 py-3',
+                'min-w-0 max-w-[85%] rounded-lg border px-4 py-3',
                 message.author === 'student'
                   ? 'border-primary/20 bg-primary-subtle'
                   : 'border-border bg-surface shadow-card',
               )}
             >
-              <p className="mb-1 flex items-center gap-2 text-[0.8125rem] font-medium">
+              <p className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.8125rem] font-medium">
                 {message.author === 'student' ? 'You' : (message.authorName ?? 'Copilot')}
                 {message.author === 'counselor' ? (
                   <Badge tone="accent" className="px-1.5 py-0.5 text-[0.6875rem]">
@@ -159,7 +159,7 @@ export function TicketThread({
                   </Badge>
                 ) : null}
               </p>
-              <p className="whitespace-pre-wrap text-[0.9375rem] leading-relaxed text-foreground/90">
+              <p className="break-words whitespace-pre-wrap text-[0.9375rem] leading-relaxed text-foreground/90">
                 {message.body}
               </p>
             </div>
@@ -182,16 +182,16 @@ export function TicketThread({
         ) : null}
 
         {typing ? (
-          <li className="flex gap-3">
+          <li className="flex min-w-0 gap-3">
             <Avatar author="counselor" name="Demo counselor" />
-            <div className="max-w-[85%] rounded-lg border border-border bg-surface px-4 py-3 shadow-card">
-              <p className="mb-1 flex items-center gap-2 text-[0.8125rem] font-medium">
+            <div className="min-w-0 max-w-[85%] rounded-lg border border-border bg-surface px-4 py-3 shadow-card">
+              <p className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.8125rem] font-medium">
                 Demo counselor
                 <Badge tone="accent" className="px-1.5 py-0.5 text-[0.6875rem]">
                   Scripted for this demo
                 </Badge>
               </p>
-              <p className="text-[0.9375rem] leading-relaxed text-foreground/90">
+              <p className="break-words text-[0.9375rem] leading-relaxed text-foreground/90">
                 {typing}
                 <span className="animate-caret ml-0.5 inline-block h-[1.1em] w-px translate-y-[0.15em] bg-foreground" />
               </p>
