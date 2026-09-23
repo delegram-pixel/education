@@ -47,6 +47,45 @@ export const courses = pgTable('courses', {
   personaProfile: jsonb('persona_profile').$type<PersonaProfile>().notNull(),
 })
 
+/**
+ * Read-only mirror of JAMB's IBASS brochure.
+ *
+ * These rows deliberately live apart from `courses`: IBASS is the national
+ * discovery catalogue, while `courses` contains the smaller set whose rules
+ * we have reviewed well enough to run an automated eligibility verdict.
+ */
+export const catalogueInstitutions = pgTable('catalogue_institutions', {
+  /** JAMB's stable institution identifier. */
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  institutionType: text('institution_type'),
+  category: text('category'),
+  state: text('state'),
+  sourceUrl: text('source_url').notNull(),
+  sourceUpdatedAt: timestamp('source_updated_at', { withTimezone: true }).notNull(),
+})
+
+export const catalogueProgrammes = pgTable(
+  'catalogue_programmes',
+  {
+    /** JAMB's programme identifier, namespaced with the institution id. */
+    id: text('id').primaryKey(),
+    institutionId: text('institution_id')
+      .notNull()
+      .references(() => catalogueInstitutions.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    department: text('department'),
+    status: text('status'),
+    utmeSubjects: jsonb('utme_subjects').$type<string[]>().notNull().default([]),
+    olevelRequirements: text('olevel_requirements'),
+    directEntryRequirements: text('direct_entry_requirements'),
+    remarks: text('remarks'),
+    sourceUrl: text('source_url').notNull(),
+    sourceUpdatedAt: timestamp('source_updated_at', { withTimezone: true }).notNull(),
+  },
+  (t) => [index('catalogue_programmes_institution_idx').on(t.institutionId)],
+)
+
 export const walkthroughs = pgTable('walkthroughs', {
   id: text('id').primaryKey(),
   title: text('title').notNull(),

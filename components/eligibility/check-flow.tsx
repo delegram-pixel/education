@@ -5,6 +5,7 @@ import Link from 'next/link'
 import * as React from 'react'
 
 import { OLevelForm } from '@/components/eligibility/olevel-form'
+import { ResultSlipImport } from '@/components/eligibility/result-slip-import'
 import { VerdictCard } from '@/components/eligibility/verdict-card'
 import { AskCopilotButton } from '@/components/swift/ask-copilot-button'
 import { Button } from '@/components/ui/button'
@@ -22,6 +23,7 @@ import type { Course, OLevelResult } from '@/lib/types'
 export function CheckFlow({ course }: { course: Course }) {
   const [state, setState] = React.useState<CheckState>({ status: 'idle' })
   const [pending, startTransition] = React.useTransition()
+  const [importedResults, setImportedResults] = React.useState<OLevelResult[] | undefined>()
   const resultRef = React.useRef<HTMLDivElement>(null)
 
   function submit(results: OLevelResult[]) {
@@ -65,15 +67,16 @@ export function CheckFlow({ course }: { course: Course }) {
           </Link>
         </Button>
 
-        {/* Friction point: typing nine subjects. The widget accepts a photo. */}
-        <AskCopilotButton
-          suggestedQuestion={`I have my O'level result slip as a photo. Can I upload it so you can read my grades for ${course.name}?`}
-          label="Upload my result slip instead"
+      {/* Swift can answer questions about a slip; the local import below fills only reviewed text. */}
+      <AskCopilotButton
+          suggestedQuestion={`I need help reading my O'level result slip for ${course.name}. If this chat supports attachments, I can attach a photo. Please explain the grades to enter, but do not guess any unreadable grade.`}
+          label="Ask about my result slip"
         />
       </div>
 
       <div className="rounded-lg border border-border bg-surface p-6 shadow-card sm:p-8">
-        <OLevelForm course={course} pending={pending} onSubmit={submit} />
+        <ResultSlipImport onApply={setImportedResults} />
+        <OLevelForm course={course} pending={pending} onSubmit={submit} importedResults={importedResults} />
       </div>
 
       {state.status === 'error' ? (

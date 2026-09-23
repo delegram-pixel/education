@@ -1,9 +1,11 @@
 /**
  * Guided walkthroughs — sample data.
  *
- * SCOPE NOTE: two walkthroughs, matching the two things a UNILAG applicant
- * actually has to sit down and do: register for the UTME with JAMB, then apply
- * for the university's own POST-UTME screening.
+ * SCOPE NOTE: three walkthroughs. Two match what a UNILAG applicant has to sit
+ * down and do — register for the UTME with JAMB, then apply for the university's
+ * own POST-UTME screening. The third covers buying the JAMB e-PIN itself, which
+ * is the part of the process that money changes hands in and the part that scams
+ * cluster around.
  *
  * DATA NOTE: the steps below follow the widely published shape of both
  * processes. Screens, shortcodes, payment channels and the order of a few
@@ -16,11 +18,21 @@
  * figure or a stale link does more damage than no figure at all. The copy
  * points at what is on screen instead.
  *
+ * THE ONE EXCEPTION, AND WHY IT IS SAFE: the e-PIN walkthrough does state a
+ * price and does link out. It has to — "open the official channel yourself" is
+ * the entire instruction, and a student about to spend money needs an anchor to
+ * budget against. So that walkthrough carries its price, its shortcode and its
+ * channels as `EpinPurchase` values from `lib/epin/`, where each one travels
+ * with a `Verification` state that the UI is required to render. The rule above
+ * is not suspended there; it is enforced by the type instead of by hand, which
+ * is the stronger version. See `lib/epin/types.ts`.
+ *
  * The `screenshotUrl` paths are referenced ahead of the images themselves; the
  * files under /public/guides are produced separately.
  */
 
 import type { Walkthrough } from '@/lib/types'
+import { JAMB_EPIN } from '@/lib/epin/channels.data'
 
 export const WALKTHROUGHS: Walkthrough[] = [
   {
@@ -65,7 +77,7 @@ export const WALKTHROUGHS: Walkthrough[] = [
         title: 'Send your NIN by text message',
         instruction:
           'Send your NIN as a text message to the shortcode shown on the screen, using the same phone number you just entered.',
-        screenshotUrl: '/guides/jamb/2.png',
+        screenshotUrl: '/guides/jamb/2.svg',
         hotspot: { x: 28, y: 40, w: 44, h: 13 }, // the shortcode panel, not a button
         tip: null,
       },
@@ -255,6 +267,119 @@ export const WALKTHROUGHS: Walkthrough[] = [
         tip: null,
       },
     ],
+  },
+  {
+    id: 'jamb-epin',
+    title: 'Buying your JAMB e-PIN',
+    description:
+      'The e-PIN is the payment you make before you go to a centre, and it is the step where students lose money to people pretending to help. Get your profile code, buy from a channel you opened yourself, and keep the PIN to yourself.',
+    estimatedMinutes: 25,
+    bringWithYou: [
+      'Your NIN slip, or the phone number your NIN is registered to',
+      'The profile code JAMB sent you — you need it before you can buy anything',
+      'A debit card in your own name, or the means to pay on the official channel',
+      'A phone you can receive text messages on, to keep the PIN',
+    ],
+    steps: [
+      {
+        id: 'epin-get-profile-code',
+        order: 1,
+        title: 'Get your profile code, if you do not have one',
+        instruction:
+          'Send your NIN as a text message to the JAMB shortcode and keep the profile code that comes back. If you already created your profile for this session, skip this step — the code does not change.',
+        screenshotUrl: '/guides/jamb-epin/1.png',
+        // `hotspot: null` on EVERY step in this walkthrough, deliberately. No
+        // real screenshots of these screens exist yet, so `AnnotatedShot` falls
+        // back to its illustrative wireframe — and a hotspot rectangle drawn on
+        // a generic mock points at nothing. An empty ring is worse than no ring:
+        // it tells a student to click a spot that does not mean anything. Add
+        // coordinates when real captures land.
+        hotspot: null,
+        tip: 'Send the text from the phone number you registered with. The reply can take a while, so do this before you are ready to pay rather than in the same minute.',
+        defines: [
+          {
+            term: 'Profile code',
+            meaning:
+              'The code JAMB sends back after you validate your NIN. It identifies you for this admission session, and it is what the vending channel asks for before it will sell you an e-PIN.',
+          },
+        ],
+      },
+      {
+        id: 'epin-check-current-terms',
+        order: 2,
+        title: 'Check the current price and deadline on the official channel',
+        instruction:
+          'Open the official channel and read the price and the deadline shown there. Do not work from a figure you were told, including the one on this page.',
+        screenshotUrl: '/guides/jamb-epin/2.png',
+        hotspot: null,
+        tip: 'The price on this page is marked unverified on purpose. This is one of the few numbers in the whole process that changes between cycles, and a student who budgets against a stale figure is the one who gets caught short at the centre.',
+      },
+      {
+        id: 'epin-open-channel',
+        order: 3,
+        title: 'Open the channel yourself',
+        instruction:
+          'Type the address into your browser, or use one of the links in the panel above this walkthrough. Check the address bar against the address shown next to the link before you enter anything.',
+        screenshotUrl: '/guides/jamb-epin/3.png',
+        hotspot: null,
+        tip: 'This is the step that decides whether the rest of the process is safe. A link that arrived by message, a sponsored search result, or a page a helpful stranger sent you can look identical to the real one and take your card details. Opening it yourself is the whole protection.',
+      },
+      {
+        id: 'epin-buy',
+        order: 4,
+        title: 'Buy the e-PIN with your own card',
+        instruction:
+          'Enter your profile code, confirm the amount matches what the channel displayed, and pay. The PIN appears on the screen and is sent to you.',
+        screenshotUrl: '/guides/jamb-epin/4.png',
+        hotspot: null,
+        tip: 'Read the amount on the payment screen before you approve it. If it is higher than the price the channel showed you a moment ago, stop and go back rather than approving it and asking afterwards.',
+      },
+      {
+        id: 'epin-safeguard-pin',
+        order: 5,
+        title: 'Keep the PIN to yourself',
+        instruction:
+          'Save the e-PIN somewhere only you can open, and do not send it to anyone — not to a friend, not to a group chat, not to someone who offers to help you register.',
+        screenshotUrl: '/guides/jamb-epin/5.png',
+        hotspot: null,
+        tip: 'The e-PIN works like cash: whoever holds the code can use it to register, and it cannot be un-used. Anyone asking you to send it "so they can check it" or "so they can help you register" is taking your registration, not helping with it.',
+        defines: [
+          {
+            term: 'e-PIN',
+            meaning:
+              'The electronic PIN you buy to pay for your UTME or Direct Entry registration. It is a code, not a receipt — losing it is the same as losing the money.',
+          },
+        ],
+      },
+      {
+        id: 'epin-cbt-centre',
+        order: 6,
+        title: 'Take the PIN and your NIN to an accredited CBT centre',
+        instruction:
+          'Go to a centre accredited for this session with your e-PIN, your NIN and your profile code. The centre uses the PIN to complete your registration and takes your fingerprints and photograph.',
+        screenshotUrl: '/guides/jamb-epin/6.png',
+        hotspot: null,
+        tip: 'Check the centre is accredited for this session before you travel. The list is published by JAMB each cycle, and a centre that has lost its accreditation cannot register you even though it may still take your PIN.',
+        defines: [
+          {
+            term: 'CBT centre',
+            meaning:
+              'Computer-Based Test centre. An accredited centre where you sit the UTME and where your registration is completed in person.',
+          },
+        ],
+      },
+      {
+        id: 'epin-keep-receipt',
+        order: 7,
+        title: 'Keep the PIN and the receipt until your registration is confirmed',
+        instruction:
+          'Keep the e-PIN, the payment confirmation and the registration slip together until the centre confirms your registration and you can see your details on the official portal.',
+        screenshotUrl: '/guides/jamb-epin/7.png',
+        hotspot: null,
+        tip: 'If a centre says the PIN did not work, do not buy a second one there and then. Check the PIN on the official channel first — a centre that has already taken one PIN and asks for another is a reason to walk away and report it.',
+      },
+    ],
+    purchase: JAMB_EPIN,
   },
 ]
 

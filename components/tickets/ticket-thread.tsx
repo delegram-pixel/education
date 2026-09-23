@@ -207,6 +207,9 @@ export function TicketThread({
         <AskCopilotButton
           suggestedQuestion={`I'm following up on ticket ${ticketId}. `}
           label="Add to this conversation"
+          // The student is already on the counselor route. Offering to send them
+          // to it again would read as a bug.
+          counselorLabel={null}
         />
       </div>
     </div>

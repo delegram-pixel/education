@@ -5,9 +5,11 @@ import Link from 'next/link'
 import * as React from 'react'
 
 import { AskCopilotButton } from '@/components/swift/ask-copilot-button'
+import { AdmissionSafetyNotice } from '@/components/shared/admission-safety-notice'
 import { Badge } from '@/components/ui/badge'
 import { Arrow, Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
+import { LANGUAGES, useLanguage } from '@/components/shared/language-preference'
 import { subjectName, type Course, type Verdict } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -89,6 +91,19 @@ export function VerdictCard({
   const tone = TONE[verdict.status]
   const Icon = tone.icon
   const toast = useToast()
+  const { language } = useLanguage()
+  const escalationContext = [
+    'I need a counselor to review an eligibility result.',
+    `Course: ${course.name} at ${course.institution}.`,
+    `Checker verdict: ${verdict.explanation}`,
+    `Credits counted: ${verdict.creditCount}/${course.olevelRule.minCredits}.`,
+    verdict.missing.length
+      ? `Requirements to review: ${verdict.missing.map((item) => subjectName(item.subject)).join(', ')}.`
+      : null,
+    `Preferred response language: ${LANGUAGES[language].label}.`,
+  ]
+    .filter(Boolean)
+    .join('\n')
 
   const requirements = [
     ...verdict.satisfied.map((s) => ({
@@ -215,6 +230,10 @@ export function VerdictCard({
         </ol>
       </div>
 
+      {/* The moment a student is most likely to act on a fee or a deadline is
+          the moment they have just been told they qualify. */}
+      <AdmissionSafetyNotice compact className="mt-5" />
+
       {/* Actions */}
       <div className="mt-6 flex flex-wrap items-center gap-3">
         {verdict.status === 'eligible' ? (
@@ -237,6 +256,10 @@ export function VerdictCard({
           size="lg"
           suggestedQuestion={`I checked my O'level results against ${course.name} at ${course.institutionShort} and the result said: "${verdict.explanation}" Can you explain what I should do next?`}
           label="Ask why"
+          // The dispute hatch below is this screen's human route, and it carries
+          // far better context than a generic link would. Two counselor doors
+          // side by side would just be noise.
+          counselorLabel={null}
         />
 
         {shareId ? (
@@ -254,9 +277,7 @@ export function VerdictCard({
         </p>
         <Button asChild variant="secondary" size="sm">
           <Link
-            href={`/tickets/new?category=eligibility_dispute&course=${course.id}&q=${encodeURIComponent(
-              `My eligibility check for ${course.name} said: ${verdict.explanation}`,
-            )}`}
+            href={`/tickets/new?category=eligibility_dispute&course=${course.id}&lang=${language}&q=${encodeURIComponent(escalationContext)}`}
           >
             This doesn&rsquo;t look right
           </Link>

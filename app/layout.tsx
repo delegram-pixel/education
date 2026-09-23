@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google'
 
-import { SwiftAgentScript } from '@/components/swift/swift-agent-script'
+import { SwiftRuntime } from '@/components/swift/swift-runtime'
 import { SiteFooter } from '@/components/shared/site-footer'
 import { SiteHeader } from '@/components/shared/site-header'
+import { LanguageProvider } from '@/components/shared/language-preference'
 import { ToastProvider } from '@/components/ui/toast'
 
 import './globals.css'
@@ -67,17 +68,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Skip to content
         </a>
 
-        <ToastProvider>
-          <div className="relative z-[1] flex min-h-dvh flex-col">
-            <SiteHeader />
-            <main id="main" className="min-w-0 flex-1">
-              {children}
-            </main>
-            <SiteFooter />
-          </div>
-        </ToastProvider>
-
-        <SwiftAgentScript />
+        <LanguageProvider>
+          <ToastProvider>
+            <SwiftRuntime>
+              <div className="relative z-[1] flex min-h-dvh flex-col">
+                <SiteHeader />
+                <main id="main" className="min-w-0 flex-1">
+                  {children}
+                </main>
+                <SiteFooter />
+              </div>
+            </SwiftRuntime>
+          </ToastProvider>
+        </LanguageProvider>
       </body>
     </html>
   )

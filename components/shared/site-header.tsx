@@ -6,18 +6,20 @@ import * as React from 'react'
 
 import { ThemeToggle } from '@/components/shared/theme-toggle'
 import { Wordmark } from '@/components/shared/wordmark'
+// import { LanguageSelector } from '@/components/shared/language-preference'
+import { AskCopilotButton } from '@/components/swift/ask-copilot-button'
 import { cn } from '@/lib/utils'
 
 const NAV = [
   { href: '/check', label: 'Check eligibility' },
+  { href: '/schools', label: 'Schools' },
   { href: '/guide', label: 'Registration guides' },
   { href: '/quiz', label: 'Course fit' },
-  { href: '/design-system', label: 'Color System Guide' },
+  // { href: '/design-system', label: 'Color System Guide' },
 ]
 
 export function SiteHeader() {
   const pathname = usePathname()
-  const router = useRouter()
   const [lifted, setLifted] = React.useState(false)
 
   React.useEffect(() => {
@@ -26,15 +28,6 @@ export function SiteHeader() {
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
-
-  function handleAsk() {
-    if (typeof window !== 'undefined' && window.SwiftAgentWidget?.open) {
-      window.SwiftAgentWidget.open()
-      return
-    }
-
-    router.push('/tickets/new')
-  }
 
   return (
     <header
@@ -60,8 +53,8 @@ export function SiteHeader() {
                 aria-current={active ? 'page' : undefined}
                 className={cn(
                   'relative rounded-md px-3.5 py-2 text-[0.9375rem] font-medium transition-colors duration-200',
-                  'hover:bg-[#FFFFC0]/[0.08]',
-                  active ? 'text-[var(--color-primary-dark)]' : 'text-[var(--color-warm-gray)] hover:text-[var(--color-primary-dark)]',
+                  'hover:bg-accent-subtle',
+                  active ? 'text-foreground' : 'text-muted hover:text-foreground',
                 )}
               >
                 {item.label}
@@ -80,19 +73,17 @@ export function SiteHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2 md:ml-0">
+          {/* <div className="hidden sm:block">
+            <LanguageSelector />
+          </div> */}
           <ThemeToggle />
-          <button
-            type="button"
-            onClick={handleAsk}
-            className={cn(
-              'open-chat h-10 rounded-md border border-[var(--color-light-gray)] bg-surface px-4',
-              'text-[0.9375rem] font-medium transition-colors duration-200',
-              'hover:border-[var(--color-primary-dark)] hover:bg-[var(--color-accent-light)] hover:text-[var(--color-primary-dark)]',
-            )}
-            aria-label="Ask a counselor or open the chat widget"
-          >
-            Ask
-          </button>
+          <AskCopilotButton
+            suggestedQuestion="I have a question about my admission process. What should I do next?"
+            label="Ask"
+            size="sm"
+            counselorLabel="Counselor"
+            className="h-10 border-border bg-surface px-4 text-[0.9375rem] text-foreground hover:border-primary hover:bg-accent hover:text-accent-fg"
+          />
         </div>
       </div>
 
@@ -111,8 +102,8 @@ export function SiteHeader() {
               className={cn(
                 'shrink-0 rounded-md px-3 py-1.5 text-[0.875rem] font-medium transition-colors',
                 active
-                  ? 'bg-[var(--color-primary-dark)] text-[var(--color-accent-light)]'
-                  : 'text-[var(--color-warm-gray)] hover:text-[var(--color-primary-dark)] hover:bg-[#FFFFC0]/[0.08]',
+                    ? 'bg-primary text-primary-fg'
+                    : 'text-muted hover:text-foreground hover:bg-accent-subtle',
               )}
             >
               {item.label}
@@ -120,6 +111,9 @@ export function SiteHeader() {
           )
         })}
       </nav>
+      {/* <div className="border-t border-border px-4 py-2 sm:hidden">
+        <LanguageSelector />
+      </div> */}
     </header>
   )
 }

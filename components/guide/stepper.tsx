@@ -1,11 +1,11 @@
 'use client'
 
-import { ArrowLeft, BookOpen, Check, CircleHelp, Lightbulb } from 'lucide-react'
+import { ArrowLeft, BookOpen, Check, Lightbulb } from 'lucide-react'
 import Link from 'next/link'
 import * as React from 'react'
 
 import { AnnotatedShot } from '@/components/guide/annotated-shot'
-import { AskCopilotButton } from '@/components/swift/ask-copilot-button'
+import { StepCompanion } from '@/components/guide/step-companion'
 import { Badge } from '@/components/ui/badge'
 import { Arrow, Button } from '@/components/ui/button'
 import type { Walkthrough } from '@/lib/types'
@@ -186,13 +186,13 @@ export function Stepper({ walkthrough }: { walkthrough: Walkthrough }) {
           ) : null}
 
           {step.tip ? (
-            <div className="mt-5 flex gap-3 rounded-md border border-[var(--color-primary-dark)]/15 bg-[var(--color-accent-light)]/40 p-4">
-              <Lightbulb aria-hidden className="mt-0.5 size-4 shrink-0 text-[var(--color-primary-dark)]" />
+            <div className="mt-5 flex gap-3 rounded-md border border-primary/15 bg-accent-subtle p-4">
+              <Lightbulb aria-hidden className="mt-0.5 size-4 shrink-0 text-foreground" />
               <div>
-                <p className="text-[0.875rem] font-bold text-[var(--color-primary-dark)]">
+                <p className="text-[0.875rem] font-bold text-foreground">
                   Most people get stuck here
                 </p>
-                <p className="mt-1 text-[0.9375rem] leading-relaxed text-[var(--color-primary-dark)]">
+                <p className="mt-1 text-[0.9375rem] leading-relaxed text-foreground">
                   {step.tip}
                 </p>
               </div>
@@ -200,17 +200,10 @@ export function Stepper({ walkthrough }: { walkthrough: Walkthrough }) {
           ) : null}
         </article>
 
-        {/* Friction point #3: stuck on a specific step. */}
-        <div className="mt-6 flex flex-col gap-3 rounded-lg border border-border bg-surface p-4 shadow-card sm:flex-row sm:flex-wrap sm:items-center">
-          <CircleHelp aria-hidden className="size-5 text-primary" />
-          <p className="min-w-0 flex-1 text-[0.9375rem] text-muted">
-            Screen not looking like this, or something not working?
-          </p>
-          <AskCopilotButton
-            suggestedQuestion={`I'm on "${step.title}" in the ${walkthrough.title} process and I'm stuck. ${step.instruction} What should I do?`}
-            label="I'm stuck on this step"
-          />
-        </div>
+        {/* Friction point #3: stuck on a specific step. Kept outside the keyed
+            article above so changing step does not remount the widget polling
+            behind these buttons. */}
+        <StepCompanion walkthrough={walkthrough} step={step} />
 
         <div className="mt-6 flex items-center justify-between gap-3 border-t border-border pt-6">
           <Button variant="ghost" onClick={() => go(index - 1)} disabled={index === 0}>

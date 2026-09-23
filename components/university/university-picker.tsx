@@ -4,6 +4,7 @@ import * as React from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
+import { Tooltip } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import {
   DEFAULT_UNIVERSITY,
@@ -53,18 +54,20 @@ export function UniversityPicker({ className }: { className?: string }) {
 
   return (
     <>
-      <Button
-        type="button"
-        variant="secondary"
-        size="sm"
-        onClick={() => setOpen(true)}
-        className={cn('min-h-11 justify-between gap-3', className)}
-      >
-        <span className="truncate text-left">{selected.name}</span>
-        <span className="rounded-full bg-primary-subtle px-2 py-0.5 text-[0.6875rem] font-medium uppercase tracking-[0.12em] text-primary">
-          {selected.code}
-        </span>
-      </Button>
+      <Tooltip content="Change the university used for this eligibility check.">
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={() => setOpen(true)}
+          className={cn('min-h-11 justify-between gap-3', className)}
+        >
+          <span className="truncate text-left">{selected.name}</span>
+          <span className="rounded-full bg-primary-subtle px-2 py-0.5 text-[0.6875rem] font-medium uppercase tracking-[0.12em] text-primary">
+            {selected.code}
+          </span>
+        </Button>
+      </Tooltip>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl p-0">

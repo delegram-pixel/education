@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Arrow, Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tooltip } from '@/components/ui/tooltip'
 import {
   ALWAYS_REQUIRED,
   GRADES,
@@ -64,14 +65,31 @@ export function OLevelForm({
   course,
   pending,
   onSubmit,
+  importedResults,
 }: {
   course: Course
   pending: boolean
   onSubmit: (results: OLevelResult[]) => void
+  importedResults?: OLevelResult[]
 }) {
   const [rows, setRows] = React.useState<Row[]>(() => initialRows(course))
   const [twoSittings, setTwoSittings] = React.useState(false)
   const [touched, setTouched] = React.useState(false)
+
+  React.useEffect(() => {
+    if (!importedResults?.length) return
+    const imported = new Map(importedResults.map((result) => [result.subject, result]))
+    const next = initialRows(course).map((row) => {
+      const result = row.subject ? imported.get(row.subject) : undefined
+      return result ? { ...row, grade: result.grade, sitting: result.sitting } : row
+    })
+    for (const result of importedResults) {
+      if (next.some((row) => row.subject === result.subject) || next.length >= MAX_SUBJECT_ROWS) continue
+      next.push({ key: newKey(), subject: result.subject, grade: result.grade, sitting: result.sitting, locked: false })
+    }
+    setRows(next)
+    setTouched(false)
+  }, [course, importedResults])
 
   const complete = rows.filter(
     (r): r is Row & { subject: SubjectCode; grade: Grade } => r.subject !== null && r.grade !== null,
@@ -260,16 +278,18 @@ export function OLevelForm({
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={addRow}
-          disabled={rows.length >= MAX_SUBJECT_ROWS}
-        >
-          <Plus aria-hidden className="size-4" />
-          Add another subject
-        </Button>
+        <Tooltip content="Add a subject if your result slip has more papers to enter.">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={addRow}
+            disabled={rows.length >= MAX_SUBJECT_ROWS}
+          >
+            <Plus aria-hidden className="size-4" />
+            Add another subject
+          </Button>
+        </Tooltip>
 
         <label className="flex cursor-pointer items-center gap-2.5 text-[0.9375rem] text-muted">
           <input

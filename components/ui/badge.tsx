@@ -8,13 +8,13 @@ const badge = cva(
   {
     variants: {
       tone: {
-        neutral: 'bg-[var(--color-light-gray)] text-[var(--color-primary-dark)]',
-        primary: 'bg-[var(--color-primary-dark)] text-[var(--color-accent-light)] font-semibold',
-        accent: 'bg-[var(--color-accent-light)] text-[var(--color-primary-dark)] font-semibold border border-[var(--color-primary-dark)]/10',
-        success: 'bg-success-subtle text-[var(--color-primary-dark)] border border-success/30 font-medium',
-        warning: 'bg-warning-subtle text-[var(--color-primary-dark)] border border-warning/30 font-medium',
+        neutral: 'bg-sunken text-foreground',
+        primary: 'bg-primary text-primary-fg font-semibold',
+        accent: 'bg-accent text-accent-fg font-semibold border border-primary/10',
+        success: 'bg-success-subtle text-foreground border border-success/30 font-medium',
+        warning: 'bg-warning-subtle text-foreground border border-warning/30 font-medium',
         danger: 'bg-danger-subtle text-danger font-medium',
-        outline: 'border border-[var(--color-light-gray)] text-[var(--color-primary-dark)]',
+        outline: 'border border-border text-foreground',
       },
     },
     defaultVariants: { tone: 'neutral' },

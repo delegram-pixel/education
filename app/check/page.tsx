@@ -1,14 +1,16 @@
-import { GraduationCap } from 'lucide-react'
-import Link from 'next/link'
 import type { Metadata } from 'next'
 
 import { CheckFlow } from '@/components/eligibility/check-flow'
+import { SchoolCoursePicker } from '@/components/eligibility/school-course-picker'
+import { AdmissionSafetyNotice } from '@/components/shared/admission-safety-notice'
+import { CourseDiscovery } from '@/components/swift/course-discovery'
 import { Reveal } from '@/components/shared/reveal'
-import { UniversityPicker } from '@/components/university/university-picker'
 import { Badge } from '@/components/ui/badge'
-import { Arrow } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
+import { UniversityPicker } from '@/components/university/university-picker'
+import { SAMPLE_INSTITUTION_DETAILS } from '@/lib/db/catalogue.data'
+import { listInstitutions } from '@/lib/db/catalogue'
 import { findCourse, listCourses } from '@/lib/db/queries'
+import { reviewedInstitutionKeys, withReviewedInstitutions } from '@/lib/institutions'
 import { listSubjects } from '@/lib/types'
 
 export const metadata: Metadata = {
@@ -35,7 +37,7 @@ export default async function CheckPage({
           </div>
           <h1
             className="text-[2rem] sm:text-[2.5rem]"
-            // Receives the morph from the card that opened this page.
+            // Receives the shared transition from the course list where supported.
             style={{ viewTransitionName: `course-${course.id}` }}
           >
             {course.name}
@@ -57,45 +59,42 @@ export default async function CheckPage({
     )
   }
 
-  const { data: courses, degraded } = await listCourses()
+  const [{ data: courses, degraded }, { institutions }] = await Promise.all([
+    listCourses(),
+    listInstitutions(),
+  ])
+
+  // The catalogue plus any school we have reviewed a course at but IBASS has not
+  // mirrored. Without this the one school the checker can decide on can be the
+  // one school it cannot offer.
+  const schools = withReviewedInstitutions(institutions, courses, SAMPLE_INSTITUTION_DETAILS)
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
       <Reveal>
-        <h1 className="text-[2rem] sm:text-[2.5rem]">Which course are you aiming for?</h1>
+        <h1 className="text-[2rem] sm:text-[2.5rem]">Choose your school and course</h1>
         <p className="mt-3 max-w-2xl text-[1.0625rem] text-muted">
-          Pick one and we&rsquo;ll check your results against exactly what it asks for. You can
-          come back and try another at any time.
+          Pick the school you have in mind, then the course you want to check. We can give you a
+          verdict on the courses we have reviewed; the rest are listings, and we say so rather than
+          guess.
         </p>
       </Reveal>
 
-      <ul className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {courses.map((c, i) => (
-          <Reveal as="li" key={c.id} delay={i * 80}>
-            <Link href={`/check?course=${c.id}`} className="group block h-full rounded-lg">
-              <Card className="flex h-full flex-col p-6" interactive>
-                <div className="flex size-10 items-center justify-center rounded-md bg-[var(--color-primary-dark)] text-[var(--color-accent-light)] shadow-sm">
-                  <GraduationCap aria-hidden className="size-5" />
-                </div>
-                <span className="mt-5 text-[0.8125rem] font-medium uppercase tracking-wide text-muted">
-                  {c.institutionShort}
-                </span>
-                <h2 className="mt-1 text-[1.25rem]" style={{ viewTransitionName: `course-${c.id}` }}>
-                  {c.name}
-                </h2>
-                <p className="mt-2.5 flex-1 text-[0.9375rem] leading-relaxed text-muted">{c.blurb}</p>
-                <div className="mt-5 flex items-center justify-between border-t border-border pt-4 text-[0.875rem]">
-                  <span className="text-muted">{c.durationYears} years</span>
-                  <span className="inline-flex items-center gap-1.5 font-medium text-primary">
-                    Start
-                    <Arrow className="size-4" />
-                  </span>
-                </div>
-              </Card>
-            </Link>
-          </Reveal>
-        ))}
-      </ul>
+      <Reveal>
+        <AdmissionSafetyNotice className="mt-6" />
+      </Reveal>
+
+      <Reveal>
+        <SchoolCoursePicker
+          institutions={schools}
+          reviewedKeys={[...reviewedInstitutionKeys(courses)]}
+          reviewedCourses={courses}
+        />
+      </Reveal>
+
+      <Reveal delay={90}>
+        <CourseDiscovery />
+      </Reveal>
 
       {degraded ? (
         <p className="mt-8 text-center text-[0.8125rem] text-muted">
