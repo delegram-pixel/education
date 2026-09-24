@@ -6,6 +6,7 @@ import { AdmissionSafetyNotice } from '@/components/shared/admission-safety-noti
 import { CourseDiscovery } from '@/components/swift/course-discovery'
 import { Reveal } from '@/components/shared/reveal'
 import { Badge } from '@/components/ui/badge'
+import { UniversityPicker } from '@/components/university/university-picker'
 import { SAMPLE_INSTITUTION_DETAILS } from '@/lib/db/catalogue.data'
 import { listInstitutions } from '@/lib/db/catalogue'
 import { findCheckTarget, listCourses } from '@/lib/db/queries'
@@ -31,10 +32,8 @@ export default async function CheckPage({
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
         <header className="mb-8">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-            <Badge tone="primary">
-              {course.institutionShort}
-              {course.faculty ? ` · ${course.faculty}` : ''}
-            </Badge>
+            <Badge tone="primary">{course.institutionShort} &middot; {course.faculty}</Badge>
+            <UniversityPicker className="w-full sm:w-auto sm:min-w-[14rem]" />
           </div>
           <h1
             className="text-[2rem] sm:text-[2.5rem]"

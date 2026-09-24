@@ -252,7 +252,7 @@ export function QuizFlow({ courses }: { courses: Course[] }) {
         </fieldset>
       </div>
 
-      <div className="mt-7 flex items-center justify-between border-t border-border pt-5">
+      <div className="mt-7 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5">
         <Button
           variant="ghost"
           disabled={index === 0}
@@ -264,7 +264,7 @@ export function QuizFlow({ courses }: { courses: Course[] }) {
           <ArrowLeft aria-hidden className="size-4" />
           Back
         </Button>
-        <Badge tone="outline">Nothing here affects your eligibility</Badge>
+        <Badge tone="outline" className="max-w-full text-center">Nothing here affects your eligibility</Badge>
       </div>
     </div>
   )

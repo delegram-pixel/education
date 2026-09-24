@@ -92,7 +92,7 @@ export function ResultSlip() {
       <div className="absolute inset-x-1.5 -bottom-1 h-full rounded-lg border border-border bg-surface/80" />
 
       <div className="relative rounded-lg border border-border bg-surface p-5 shadow-lifted">
-        <div className="flex items-baseline justify-between border-b border-border pb-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-b border-border pb-3">
           <span className="font-display text-[0.9375rem] font-semibold">O&rsquo;level results</span>
           <span className="tabular text-[0.8125rem] text-muted">
             <span

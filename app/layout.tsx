@@ -73,7 +73,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <SwiftRuntime>
               <div className="relative z-[1] flex min-h-dvh flex-col">
                 <SiteHeader />
-                <main id="main" className="flex-1">
+                <main id="main" className="min-w-0 flex-1">
                   {children}
                 </main>
                 <SiteFooter />
