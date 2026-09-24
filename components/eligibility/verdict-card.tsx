@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Arrow, Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { LANGUAGES, useLanguage } from '@/components/shared/language-preference'
-import { subjectName, type Course, type Verdict } from '@/lib/types'
+import { subjectName, type CheckTarget, type Verdict } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 const TONE = {
@@ -79,13 +79,19 @@ function CreditRing({ have, need, stroke }: { have: number; need: number; stroke
   )
 }
 
+/** "A" / "A and B" / "A, B and C" — for naming what a reading could not include. */
+function listNames(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? ''
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+}
+
 export function VerdictCard({
   verdict,
   course,
   shareId,
 }: {
   verdict: Verdict
-  course: Course
+  course: CheckTarget
   shareId: string | null
 }) {
   const tone = TONE[verdict.status]
@@ -286,10 +292,34 @@ export function VerdictCard({
 
       <p className="mt-5 text-center text-[0.8125rem] text-muted">
         <Badge tone="outline" className="mr-2">
-          Sample data
+          {course.provenance === 'reviewed' ? 'Sample data' : 'Requirement read from IBASS'}
         </Badge>
-        Requirements and the {course.utmeCutoff} cut-off shown here are indicative prior-year
-        figures for a demonstration, not this year&rsquo;s official numbers.
+        {/* Two sentences rather than one with a hole in it. A reviewed course has
+            a prior-year cut-off to disclaim; a requirement read out of the
+            brochure has no cut-off at all, and printing "the undefined cut-off"
+            — or silently keeping a number we never had — would both be worse
+            than saying plainly what the verdict does and does not rest on. */}
+        {course.utmeCutoff === undefined
+          ? 'This verdict rests on the requirement IBASS publishes, and is indicative rather than this year’s official position.'
+          : `Requirements and the ${course.utmeCutoff} cut-off shown here are indicative prior-year figures for a demonstration, not this year’s official numbers.`}
+        {/* A reading that had to leave something out says so. The brochure names
+            subjects our list has no code for — "Business Management", "Data
+            Processing/Computer Studies" — and dropping one from a "choose two
+            from" group makes the requirement *narrower* than the brochure. So a
+            student who credited one of them is told here that this verdict was
+            never counting it, rather than being told plainly that they fail.
+            Only ever a false negative: dropping an option cannot make someone
+            eligible who is not, so a "you qualify" above is unaffected. */}
+        {course.olevelRule.unmapped?.length ? (
+          <>
+            {' '}
+            It also left out {listNames(course.olevelRule.unmapped)} — the brochure allows{' '}
+            {course.olevelRule.unmapped.length === 1 ? 'it' : 'them'}, but we have no matching
+            subject on our list, so {course.olevelRule.unmapped.length === 1 ? 'it was' : 'they were'}{' '}
+            not counted. If you credited {course.olevelRule.unmapped.length === 1 ? 'it' : 'one of them'},
+            ask a counselor rather than trusting this verdict.
+          </>
+        ) : null}
       </p>
     </div>
   )

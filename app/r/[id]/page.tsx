@@ -6,7 +6,7 @@ import type { Metadata } from 'next'
 import { VerdictCard } from '@/components/eligibility/verdict-card'
 import { Badge } from '@/components/ui/badge'
 import { Arrow, Button } from '@/components/ui/button'
-import { findCheck, findCourse } from '@/lib/db/queries'
+import { findCheck, findCheckTarget } from '@/lib/db/queries'
 
 export const metadata: Metadata = {
   title: 'A shared eligibility result',
@@ -26,7 +26,9 @@ export default async function SharedResultPage({ params }: { params: Promise<{ i
 
   if (!check) notFound()
 
-  const course = await findCourse(check.courseId)
+  // Resolved through the same function the check itself went through, so a
+  // shared link shows the same verdict it showed when it was made.
+  const course = await findCheckTarget(check.courseId)
   if (!course) notFound()
 
   return (

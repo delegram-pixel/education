@@ -434,4 +434,40 @@ describe('coursesForInstitution', () => {
   it('matches the school however the two spell the name', () => {
     expect(coursesForInstitution([], [unilag], 'university of lagos')).toHaveLength(1)
   })
+
+  it('offers two rows that share a programme name as two options', () => {
+    const courses = coursesForInstitution(
+      [
+        programme({
+          programme: 'Fisheries',
+          department: 'Faculty of Agriculture',
+          programmeId: 'unilag:fisheries-agriculture',
+        }),
+        programme({
+          programme: 'Fisheries',
+          department: 'Faculty of Science',
+          programmeId: 'unilag:fisheries-science',
+        }),
+      ],
+      [],
+      'University of Lagos',
+    )
+
+    expect(courses).toHaveLength(2)
+    expect(new Set(courses.map((entry) => entry.key)).size).toBe(2)
+  })
+
+  it('keeps one option when the mirror lists one offering twice', () => {
+    const courses = coursesForInstitution(
+      [
+        programme({ programme: 'Fisheries', programmeId: 'unilag:fisheries-a' }),
+        programme({ programme: 'Fisheries', programmeId: 'unilag:fisheries-b', ruleStatus: 'ready' }),
+      ],
+      [],
+      'University of Lagos',
+    )
+
+    expect(courses).toHaveLength(1)
+    expect(courses[0]?.ruleStatus).toBe('ready')
+  })
 })

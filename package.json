@@ -16,6 +16,7 @@
     "catalogue:prepare": "tsx scripts/prepare-ibass-catalogue.ts",
     "catalogue:sync": "tsx scripts/sync-ibass-catalogue.ts",
     "catalogue:status": "tsx scripts/catalogue-status.ts",
+    "rules:read": "tsx scripts/read-rules.ts",
     "catalogue:probe": "tsx scripts/probe-ibass-catalogue.ts",
     "guides:placeholders": "tsx scripts/generate-placeholders.ts"
   },

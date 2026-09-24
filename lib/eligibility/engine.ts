@@ -17,7 +17,7 @@ import {
   isCredit,
   listSubjects,
   subjectName,
-  type Course,
+  type EligibilitySubject,
   type Grade,
   type MissingRequirement,
   type OLevelResult,
@@ -46,8 +46,8 @@ export function normaliseResults(results: OLevelResult[]): Map<SubjectCode, OLev
   return best
 }
 
-export function checkEligibility(course: Course, results: OLevelResult[]): Verdict {
-  const { olevelRule: rule } = course
+export function checkEligibility(subject: EligibilitySubject, results: OLevelResult[]): Verdict {
+  const { olevelRule: rule } = subject
   const best = normaliseResults(results)
 
   const sittingsUsed = new Set(results.map((r) => r.sitting)).size
@@ -122,8 +122,8 @@ export function checkEligibility(course: Course, results: OLevelResult[]): Verdi
     shortfall,
     blockers,
     sittingsUsed,
-    explanation: explain(course, { status, missing, unmetGroups, shortfall, creditCount }),
-    nextSteps: buildNextSteps(course, { status, missing, unmetGroups, shortfall, creditCount }),
+    explanation: explain(subject, { status, missing, unmetGroups, shortfall, creditCount }),
+    nextSteps: buildNextSteps(subject, { status, missing, unmetGroups, shortfall, creditCount }),
   }
 }
 
@@ -146,9 +146,9 @@ function describeMissing(m: MissingRequirement): string {
     : `a credit in ${subjectName(m.subject)}`
 }
 
-function explain(course: Course, v: VerdictCore): string {
+function explain(subject: EligibilitySubject, v: VerdictCore): string {
   if (v.status === 'eligible') {
-    return `You meet every O'level requirement for ${course.name} at ${course.institutionShort}.`
+    return `You meet every O'level requirement for ${subject.name} at ${subject.institutionShort}.`
   }
 
   if (v.status === 'partial') {
@@ -168,7 +168,7 @@ function explain(course: Course, v: VerdictCore): string {
   }
 
   if (v.missing.length >= 2) {
-    return `You're currently missing credits in ${listSubjects(v.missing.map((m) => m.subject))}, which ${course.name} requires.`
+    return `You're currently missing credits in ${listSubjects(v.missing.map((m) => m.subject))}, which ${subject.name} requires.`
   }
 
   if (v.missing.length === 1 && v.missing[0]) {
@@ -178,14 +178,32 @@ function explain(course: Course, v: VerdictCore): string {
   return `You have ${v.creditCount} credit${v.creditCount === 1 ? '' : 's'} so far, and this course needs ${v.creditCount + v.shortfall}.`
 }
 
-function buildNextSteps(course: Course, v: VerdictCore): string[] {
+function buildNextSteps(subject: EligibilitySubject, v: VerdictCore): string[] {
   const steps: string[] = []
 
   if (v.status === 'eligible') {
+    const { utmeRule, utmeCutoff } = subject
+
+    // The two branches here are the whole reason `EligibilitySubject` exists.
+    // A reviewed course carries the UTME combination we hold for it; a rule read
+    // out of the brochure carries nothing about UTME, because the sentence we
+    // read was about O'level credits. Naming a combination we do not hold, or a
+    // cut-off we never had, would be inventing the two numbers a student is most
+    // likely to act on.
     steps.push(
-      `Register for UTME with ${listSubjects([...course.utmeRule.compulsory, ...course.utmeRule.chooseFrom.slice(0, course.utmeRule.choose)])}.`,
-      `Aim for ${course.utmeCutoff} or above — that was roughly the mark admitted students hit last year.`,
-      `After UTME, apply for ${course.institutionShort}'s POST-UTME screening. We'll walk you through it.`,
+      utmeRule
+        ? `Register for UTME with ${listSubjects([...utmeRule.compulsory, ...utmeRule.chooseFrom.slice(0, utmeRule.choose)])}.`
+        : 'Register for UTME — check this course’s subject combination in IBASS before you choose your subjects.',
+    )
+
+    if (utmeCutoff !== undefined) {
+      steps.push(
+        `Aim for ${utmeCutoff} or above — that was roughly the mark admitted students hit last year.`,
+      )
+    }
+
+    steps.push(
+      `After UTME, apply for ${subject.institutionShort}'s POST-UTME screening. We'll walk you through it.`,
     )
     return steps
   }

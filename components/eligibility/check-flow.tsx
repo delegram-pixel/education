@@ -10,7 +10,7 @@ import { VerdictCard } from '@/components/eligibility/verdict-card'
 import { AskCopilotButton } from '@/components/swift/ask-copilot-button'
 import { Button } from '@/components/ui/button'
 import { runCheck, type CheckState } from '@/app/check/actions'
-import type { Course, OLevelResult } from '@/lib/types'
+import type { CheckTarget, OLevelResult } from '@/lib/types'
 
 /**
  * Orchestrates the two halves of a check: the form, then the verdict.
@@ -20,7 +20,7 @@ import type { Course, OLevelResult } from '@/lib/types'
  * history is left alone for the same reason — Back should leave the check, not
  * unwind it a field at a time.
  */
-export function CheckFlow({ course }: { course: Course }) {
+export function CheckFlow({ course }: { course: CheckTarget }) {
   const [state, setState] = React.useState<CheckState>({ status: 'idle' })
   const [pending, startTransition] = React.useTransition()
   const [importedResults, setImportedResults] = React.useState<OLevelResult[] | undefined>()

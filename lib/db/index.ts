@@ -11,10 +11,35 @@
  * that might not be there.
  */
 
-import { neon } from '@neondatabase/serverless'
+import { neon, neonConfig } from '@neondatabase/serverless'
 import { drizzle } from 'drizzle-orm/neon-http'
 
 import * as schema from './schema'
+
+/**
+ * How long one database round trip may take before we stop waiting for it.
+ *
+ * There has to be a ceiling, for the same reason `lib/rules/model.ts` puts one
+ * on the model call: a stalled connection otherwise holds the request open until
+ * the operating system loses patience, and by then the student has been staring
+ * at a spinner for the better part of a minute. `withFallback` below is what
+ * turns an unreachable database into static data — but it can only run once the
+ * attempt has returned, and without a deadline that return is measured in tens
+ * of seconds.
+ *
+ * Generous on purpose. This is a floor under a hung connection, not a
+ * performance budget: a query that genuinely needs longer than ten seconds is
+ * one that should be reading fewer rows or fewer columns.
+ */
+const DB_TIMEOUT_MS = 10_000
+
+// Applied through the driver's own fetch hook rather than through `fetchOptions`
+// on the client, because the signal has to be created per request — one built
+// here at module load would fire once and leave every later query permanently
+// aborted. `neonConfig.fetchFunction` takes the same arguments as `fetch` and is
+// called once per query, which is exactly the lifetime this deadline wants.
+neonConfig.fetchFunction = (input: RequestInfo | URL, init?: RequestInit) =>
+  fetch(input, { ...init, signal: AbortSignal.timeout(DB_TIMEOUT_MS) })
 
 const connectionString = process.env.DATABASE_URL
 

@@ -238,7 +238,10 @@ export function SchoolCombobox({
           id={`${baseId}-listbox`}
           role="listbox"
           aria-label="Schools"
-          className="absolute z-50 mt-2 max-h-80 w-full overflow-y-auto rounded-md border border-border bg-surface p-1.5 shadow-lifted"
+          // `overflow-y-auto` alone computes `overflow-x` to `auto` as well, so
+          // any sub-pixel nudge from the `scrollIntoView` below puts a horizontal
+          // scrollbar across the list. The rows are built to shrink instead.
+          className="absolute z-50 mt-2 max-h-80 w-full overflow-y-auto overflow-x-hidden rounded-md border border-border bg-surface p-1.5 shadow-lifted"
         >
           {optionCount ? (
             <>
