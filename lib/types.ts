@@ -151,7 +151,41 @@ export type OLevelRule = {
   mandatory: SubjectCode[]
   anyOf?: AnyOfGroup[]
   maxSittings: number
+  /**
+   * Subjects the sentence names that we have no code for — "Business
+   * Management", "Data Processing/Computer Studies", "Basic Electricity".
+   *
+   * Recorded rather than dropped silently. A rule that ignores an option the
+   * brochure allows is *stricter than the truth*: a student who credited one of
+   * these can be told they do not meet a group they actually do. Keeping the
+   * names on the rule is what lets the verdict say so instead of answering
+   * confidently from a reading we know is partial.
+   *
+   * Absent on a complete reading, which is the common case.
+   */
+  unmapped?: string[]
 }
+
+/**
+ * How much the reader trusts a rule it produced.
+ *
+ * A machine-read rule is stored and used either way — `low` is a note to
+ * ourselves, not a gate. It is what makes a rule findable later when someone
+ * gets round to checking these by hand.
+ */
+export type RuleConfidence = 'high' | 'low'
+
+/**
+ * Whether a programme has a rule, or has been established as having no readable
+ * requirement.
+ *
+ * `'no-source'` covers both a programme whose prose is empty and one whose prose
+ * says nothing about O'level credits. The two are the same thing to every caller
+ * — there is no rule and there is nothing further to read — and folding them
+ * together is what stops an unreadable programme costing one model call per
+ * student who picks it.
+ */
+export type ProgrammeRuleStatus = 'ready' | 'no-source'
 
 export type UtmeRule = {
   /** Always English Language in practice, kept explicit rather than assumed. */
@@ -231,6 +265,54 @@ export type Course = {
   /** What the day-to-day of studying it actually looks like. */
   reality: string
   durationYears: number
+}
+
+/* -------------------------------------------------------------------------- */
+/* What the checker decides on                                                 */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The least the eligibility engine needs in order to decide anything.
+ *
+ * Narrower than `Course` on purpose. A `Course` satisfies this structurally, so
+ * the reviewed path passes one straight through untouched; a catalogue
+ * programme satisfies it too, carrying only the rule that was read for it.
+ *
+ * The two UTME fields are optional because the two paths genuinely differ: we
+ * hold a reviewed UTME rule and a prior-year cut-off for the three courses a
+ * person wrote up, and for nothing else. They are optional rather than required
+ * and faked, because a made-up cut-off is a number a student would plan around.
+ */
+export type EligibilitySubject = {
+  name: string
+  institutionShort: string
+  olevelRule: OLevelRule
+  /** Absent for a rule read from the brochure. */
+  utmeRule?: UtmeRule
+  /** Indicative, prior-year. Absent for a rule read from the brochure. */
+  utmeCutoff?: number
+}
+
+/**
+ * Something the checker can return a verdict on.
+ *
+ * `provenance` is the important field and it is not bookkeeping. `'reviewed'`
+ * means a person wrote this rule for a course we chose to support; `'read'`
+ * means a model read it out of the sentence IBASS publishes. Both produce a
+ * verdict, and the difference is stated on screen rather than hidden, because
+ * the two are not equally trustworthy and a student is entitled to know which
+ * one just answered them.
+ *
+ * `Course` deliberately does not satisfy this — a caller must say which it is.
+ */
+export type CheckTarget = EligibilitySubject & {
+  id: string
+  institution: string
+  provenance: 'reviewed' | 'read'
+  /** The panel's eyebrow: a faculty for a reviewed course, a department otherwise. */
+  faculty: string | null
+  /** One plain-language sentence about the course. Only a reviewed course has one. */
+  blurb: string | null
 }
 
 /* -------------------------------------------------------------------------- */

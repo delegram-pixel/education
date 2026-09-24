@@ -21,6 +21,8 @@ import type {
   OLevelResult,
   OLevelRule,
   PersonaProfile,
+  ProgrammeRuleStatus,
+  RuleConfidence,
   TicketCategory,
   TicketStatus,
   UtmeRule,
@@ -85,6 +87,45 @@ export const catalogueProgrammes = pgTable(
   },
   (t) => [index('catalogue_programmes_institution_idx').on(t.institutionId)],
 )
+
+/**
+ * Our reading of a catalogue programme's requirement prose.
+ *
+ * Deliberately a separate table rather than columns on `catalogue_programmes`.
+ * That table is a faithful mirror of what IBASS published — we copy their
+ * sentence word for word, HTML and all, and never edit it. A rule is our
+ * *derivation* from that sentence, which is a different kind of claim about the
+ * same programme. Keeping the two apart means a re-import cannot clobber a
+ * rule, and the mirror stays honest about being only a mirror.
+ */
+export const programmeRules = pgTable('programme_rules', {
+  /**
+   * The programme's own id — a rule is one per programme by definition, so this
+   * is the primary key rather than a foreign key beside a generated one.
+   */
+  programmeId: text('programme_id')
+    .primaryKey()
+    .references(() => catalogueProgrammes.id, { onDelete: 'cascade' }),
+  /** Null exactly when `status` is 'no-source'. */
+  olevelRule: jsonb('olevel_rule').$type<OLevelRule>(),
+  status: text('status').$type<ProgrammeRuleStatus>().notNull(),
+  /**
+   * The prose the rule was read from, as plain text rather than as the HTML it
+   * arrived in. This is what makes a stored rule auditable — you can read the
+   * sentence it came from without opening the brochure.
+   */
+  sourceText: text('source_text'),
+  /**
+   * A digest of `sourceText`. When IBASS rewords a requirement, this stops
+   * matching what the mirror now holds, which is how every rule built from the
+   * old wording can be found.
+   */
+  sourceHash: text('source_hash'),
+  confidence: text('confidence').$type<RuleConfidence>().notNull(),
+  /** Which model produced it. Provenance, for when a better one arrives. */
+  model: text('model').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+})
 
 export const walkthroughs = pgTable('walkthroughs', {
   id: text('id').primaryKey(),

@@ -48,7 +48,27 @@ function pick(record: ApiRecord, ...keys: string[]): string | null {
   return null
 }
 
+/**
+ * A free-text field, or a list of them, to a list of labels.
+ *
+ * IBASS is inconsistent about this: some fields arrive as a JSON array of
+ * strings, others as one comma-separated sentence in a single string. The
+ * string case used to fall straight through to `[]`, which is how every UTME
+ * subject combination in the mirror came to be empty while the O'level prose
+ * beside it imported fine.
+ *
+ * Split on commas only. A subject name can contain "and" — "Food and
+ * Nutrition" is one subject, not two — so splitting on it would invent
+ * subjects that do not exist.
+ */
 function stringList(value: unknown): string[] {
+  if (typeof value === 'string') {
+    return value
+      .split(',')
+      .map((part) => part.trim())
+      .filter(Boolean)
+  }
+
   if (!Array.isArray(value)) return []
   return value.flatMap((item) => {
     if (typeof item === 'string') return [item]
@@ -219,18 +239,62 @@ async function main() {
   // and the gap could never close. Comparing against the total IBASS reports
   // makes the check exact, and costs one page-one request we were making
   // anyway.
-  const storedCounts =
-    process.env.RESUME === '1'
-      ? new Map(
+  //
+  // `REFRESH=1` is resume-with-repair, so it builds the same map.
+  const resuming = process.env.RESUME === '1' || process.env.REFRESH === '1'
+  const storedCounts = resuming
+    ? new Map(
+        (
+          await db
+            .select({ id: catalogueProgrammes.institutionId, total: count() })
+            .from(catalogueProgrammes)
+            .groupBy(catalogueProgrammes.institutionId)
+        ).map((row) => [row.id, Number(row.total)]),
+      )
+    : null
+
+  /**
+   * `REFRESH=1` — re-import the schools whose stored programmes lost their UTME
+   * subject combination.
+   *
+   * Every row in the mirror today was written by a `stringList` that returned
+   * `[]` for anything that was not already an array. IBASS sends `subjects` as
+   * a sentence, so the field imported empty for the whole country. Repairing
+   * that function only changes what the *next* sweep captures; the rows already
+   * stored keep the empty list they were written with, and the only way to fix
+   * them is to fetch those schools again.
+   *
+   * A full sweep would do it, and the full sweep is hours. This narrows it to
+   * the schools that actually carry a damaged row.
+   *
+   * It deliberately over-selects. An empty list is also what a programme with
+   * genuinely no subjects looks like, and from the mirror alone there is no way
+   * to tell the two apart — so one empty list re-imports the institution. That
+   * is the same trade the count check above makes: redoing a school costs a
+   * couple of minutes, while leaving a damaged one costs every student the
+   * subjects that programme asks for, silently and permanently.
+   */
+  const refreshIds =
+    process.env.REFRESH === '1'
+      ? new Set(
           (
             await db
-              .select({ id: catalogueProgrammes.institutionId, total: count() })
+              .select({ id: catalogueProgrammes.institutionId })
               .from(catalogueProgrammes)
+              .where(
+                // `jsonb_typeof` first: `jsonb_array_length` raises on anything
+                // that is not an array, so a single row of the wrong shape would
+                // take down the whole repair query rather than skipping itself.
+                sql`jsonb_typeof(${catalogueProgrammes.utmeSubjects}) = 'array'
+                    and jsonb_array_length(${catalogueProgrammes.utmeSubjects}) = 0`,
+              )
               .groupBy(catalogueProgrammes.institutionId)
-          ).map((row) => [row.id, Number(row.total)]),
+          ).map((row) => row.id),
         )
       : null
+
   let skippedCount = 0
+  let refreshedCount = 0
 
   const types = records(await request('/inst-type'))
   if (!types.length) throw new Error('IBASS returned no institution types; the import was not changed.')
@@ -417,10 +481,15 @@ async function main() {
       // the work. An institution whose stored count disagrees with IBASS is
       // re-imported in full: the pages are upserts, so redoing one is safe, and
       // a partial school is worse than a repeated fetch.
-      if (storedCounts?.get(institutionId) === totalRecords(programmeFirstPage)) {
+      //
+      // Under `REFRESH=1` a complete school is still redone when it holds a
+      // damaged row, which is the whole point of the flag.
+      const damaged = refreshIds?.has(institutionId) ?? false
+      if (!damaged && storedCounts?.get(institutionId) === totalRecords(programmeFirstPage)) {
         skippedCount += 1
         continue
       }
+      if (damaged) refreshedCount += 1
 
       for (let page = 2; page <= programmePages; page += 1) {
         await new Promise((resolve) => setTimeout(resolve, REQUEST_PAUSE_MS))
@@ -493,8 +562,11 @@ async function main() {
   const narrowed = schoolNeedles.length
     ? ` Narrowed to ${schoolNeedles.length} named school(s).`
     : ''
+  // Said outright, because a REFRESH that matched nothing and a REFRESH that
+  // repaired everything look identical from the outside — both are "it ran".
+  const refreshed = refreshIds ? ` Re-read ${refreshedCount} school(s) carrying an empty subject list.` : ''
   console.log(
-    `Imported ${institutionCount} institutions and ${programmeCount} programmes from JAMB IBASS.${skipped}${narrowed}`,
+    `Imported ${institutionCount} institutions and ${programmeCount} programmes from JAMB IBASS.${skipped}${refreshed}${narrowed}`,
   )
 
   /**

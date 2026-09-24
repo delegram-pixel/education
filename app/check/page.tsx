@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { UniversityPicker } from '@/components/university/university-picker'
 import { SAMPLE_INSTITUTION_DETAILS } from '@/lib/db/catalogue.data'
 import { listInstitutions } from '@/lib/db/catalogue'
-import { findCourse, listCourses } from '@/lib/db/queries'
+import { findCheckTarget, listCourses } from '@/lib/db/queries'
 import { reviewedInstitutionKeys, withReviewedInstitutions } from '@/lib/institutions'
 import { listSubjects } from '@/lib/types'
 
@@ -25,7 +25,7 @@ export default async function CheckPage({
   searchParams: Promise<{ course?: string }>
 }) {
   const { course: courseId } = await searchParams
-  const course = courseId ? await findCourse(courseId) : undefined
+  const course = courseId ? await findCheckTarget(courseId) : null
 
   if (course) {
     return (
@@ -42,7 +42,12 @@ export default async function CheckPage({
           >
             {course.name}
           </h1>
-          <p className="mt-3 text-[1.0625rem] leading-relaxed text-muted">{course.blurb}</p>
+          {/* Only a course we have written up has a description. A rule read out
+              of the brochure says nothing about what the course is like, and
+              writing one would be describing something we have not looked at. */}
+          {course.blurb ? (
+            <p className="mt-3 text-[1.0625rem] leading-relaxed text-muted">{course.blurb}</p>
+          ) : null}
           <p className="mt-4 rounded-md bg-sunken px-4 py-3 text-[0.9375rem] text-muted">
             <strong className="font-medium text-foreground">What it needs:</strong>{' '}
             {course.olevelRule.minCredits} credits including{' '}

@@ -2,7 +2,7 @@
 
 import { searchProgrammes } from '@/lib/db/discovery'
 import { checkEligibility } from '@/lib/eligibility/engine'
-import { findCourse, saveCheck } from '@/lib/db/queries'
+import { findCheckTarget, saveCheck } from '@/lib/db/queries'
 import { ensureSessionId } from '@/lib/session'
 import type { DiscoveryMatch } from '@/lib/discovery'
 import {
@@ -32,8 +32,8 @@ export type CheckState =
  * answer even if the database is unreachable; all they lose is the share link.
  */
 export async function runCheck(courseId: string, results: OLevelResult[]): Promise<CheckState> {
-  const course = await findCourse(courseId)
-  if (!course) {
+  const target = await findCheckTarget(courseId)
+  if (!target) {
     return { status: 'error', message: 'We could not find that course. Please pick it again.' }
   }
 
@@ -46,7 +46,7 @@ export async function runCheck(courseId: string, results: OLevelResult[]): Promi
     }
   }
 
-  const verdict = checkEligibility(course, parsed.data)
+  const verdict = checkEligibility(target, parsed.data)
 
   const sessionId = await ensureSessionId()
   const shareId = await saveCheck({ sessionId, courseId, results: parsed.data, verdict })

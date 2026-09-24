@@ -17,7 +17,7 @@ import {
   SUBJECT_CODES,
   isCredit,
   subjectName,
-  type Course,
+  type CheckTarget,
   type Grade,
   type OLevelResult,
   type SubjectCode,
@@ -36,7 +36,7 @@ type Row = {
 let rowCounter = 0
 const newKey = () => `row-${rowCounter++}`
 
-function initialRows(course: Course): Row[] {
+function initialRows(course: CheckTarget): Row[] {
   // Pre-fill the subjects this course actually requires, so the student only
   // has to supply grades. Typing nine subject names is the highest-friction
   // moment in the whole flow and most of it is avoidable.
@@ -67,7 +67,7 @@ export function OLevelForm({
   onSubmit,
   importedResults,
 }: {
-  course: Course
+  course: CheckTarget
   pending: boolean
   onSubmit: (results: OLevelResult[]) => void
   importedResults?: OLevelResult[]

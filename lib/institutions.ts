@@ -13,6 +13,7 @@
 
 import type { CatalogueInstitution } from '@/lib/db/catalogue'
 import { nameKey } from '@/lib/discovery'
+import type { ProgrammeRuleStatus } from '@/lib/types'
 
 export type InstitutionGroup = {
   /** Null when the catalogue records no state for these institutions. */
@@ -68,6 +69,20 @@ function trimmed(value: string | null): string | null {
 
 export function recordedState(institution: CatalogueInstitution): string | null {
   return trimmed(institution.state)
+}
+
+/**
+ * The institution's name as a sentence refers to it.
+ *
+ * IBASS writes a school as "NAME, CITY, STATE" — `UNIVERSITY OF CALABAR,
+ * CALABAR, CROSS RIVER STATE`. That is the right thing to keep in the mirror and
+ * the wrong thing to drop into the middle of a sentence a student reads, so the
+ * first segment is used wherever the name appears in prose. Nothing is invented:
+ * the first comma is IBASS's own, and a name with no comma is returned whole.
+ */
+export function shortInstitutionName(name: string): string {
+  const [first] = name.split(',')
+  return first?.trim() || name
 }
 
 /** The state filter's value for this row, folding "not recorded" into one bucket. */
@@ -487,6 +502,10 @@ export type CatalogueProgrammeRow = {
   utmeSubjects: string[]
   sourceUrl: string
   reviewedCourseId: string | null
+  /** The mirror's id for this row. Absent on a caller that has no mirror. */
+  programmeId?: string | null
+  /** Whether a rule has been read for it. Absent when nobody has asked. */
+  ruleStatus?: ProgrammeRuleStatus | null
 }
 
 /** One course as the picker offers it. */
@@ -499,6 +518,17 @@ export type SchoolCourse = {
   sourceUrl: string
   /** Non-null when the checker can return a verdict on this course. */
   reviewedCourseId: string | null
+  /** The catalogue programme this listing came from, when it came from one. */
+  programmeId: string | null
+  /**
+   * Whether a rule has been read for it.
+   *
+   * The picker reads this before doing anything: `'ready'` means a verdict is
+   * one click away and no work is needed, `'no-source'` means the brochure had
+   * nothing to say and this course is settled as unverifiable, and `null` means
+   * nobody has looked yet — which is the only case worth spending a read on.
+   */
+  ruleStatus: ProgrammeRuleStatus | null
 }
 
 /**
@@ -532,23 +562,37 @@ export function coursesForInstitution(
       utmeSubjects: [],
       sourceUrl: BROCHURE_URL,
       reviewedCourseId: course.id,
+      // A reviewed course is decided by the rule we wrote by hand, so there is
+      // no catalogue row to read one for and nothing for the picker to wait on.
+      programmeId: null,
+      ruleStatus: null,
     }))
 
   const reviewedNames = new Set(reviewed.map((course) => nameKey(course.name)))
 
-  const listings: SchoolCourse[] = programmes
-    .filter((programme) => !reviewedNames.has(nameKey(programme.programme)))
-    .map((programme) => ({
-      key: `listing:${nameKey(programme.programme)}`,
-      name: programme.programme,
-      department: programme.department,
-      utmeSubjects: programme.utmeSubjects,
-      sourceUrl: programme.sourceUrl,
-      // A catalogue row can resolve to a reviewed course by name even when the
-      // two spell the programme differently; that link is already made upstream
-      // and is carried through rather than recomputed.
-      reviewedCourseId: programme.reviewedCourseId,
-    }))
+  // Keyed by the row, not by its name. IBASS lists the same programme name more
+  // than once at a school — one course taught in two faculties, or a single
+  // offering published twice — and a key cut from the name folded those rows
+  // into one option: two entries sharing a value, which the Select cannot tell
+  // apart (it reads `value` as the option's identity, so the pair select as one)
+  // and React rejects as duplicate keys.
+  const listings: SchoolCourse[] = oneOfferingEach(
+    programmes
+      .filter((programme) => !reviewedNames.has(nameKey(programme.programme)))
+      .map((programme) => ({
+        key: listingKey(programme),
+        name: programme.programme,
+        department: programme.department,
+        utmeSubjects: programme.utmeSubjects,
+        sourceUrl: programme.sourceUrl,
+        // A catalogue row can resolve to a reviewed course by name even when the
+        // two spell the programme differently; that link is already made upstream
+        // and is carried through rather than recomputed.
+        reviewedCourseId: programme.reviewedCourseId,
+        programmeId: programme.programmeId ?? null,
+        ruleStatus: programme.ruleStatus ?? null,
+      })),
+  )
 
   // Reviewed first — they are the reason the checker exists, and the one course
   // a student can act on should not sit in the middle of ninety listings. Within
@@ -565,5 +609,46 @@ export function coursesForInstitution(
 
 function byCourseName(a: SchoolCourse, b: SchoolCourse): number {
   return a.name.localeCompare(b.name)
+}
+
+/**
+ * An option's key: the mirror's own id where the row has one, so two rows that
+ * share a name stay two options.
+ *
+ * The name is an identity only for the sample rows, which carry no mirror id —
+ * and those are hand-written, so there a name plus a department really does
+ * name one offering.
+ */
+function listingKey(programme: CatalogueProgrammeRow): string {
+  return programme.programmeId
+    ? `programme:${programme.programmeId}`
+    : `listing:${nameKey(programme.programme)}:${nameKey(programme.department ?? '')}`
+}
+
+/**
+ * One entry per offering, where an offering is a name and a department.
+ *
+ * The mirror can hold the same offering twice under two JAMB ids, and two
+ * options a student cannot tell apart are worse than either — the same reason a
+ * reviewed course wins over a catalogue row of the same name. The row that
+ * leads somewhere survives: checkable first, then one whose rule has been read,
+ * then whichever came first.
+ */
+function oneOfferingEach(listings: SchoolCourse[]): SchoolCourse[] {
+  const byOffering = new Map<string, SchoolCourse>()
+
+  for (const listing of listings) {
+    const offering = `${nameKey(listing.name)}|${nameKey(listing.department ?? '')}`
+    const kept = byOffering.get(offering)
+    if (!kept || rank(listing) > rank(kept)) byOffering.set(offering, listing)
+  }
+
+  return [...byOffering.values()]
+}
+
+/** How far a student can get from a listing, for choosing between two rows. */
+function rank(listing: SchoolCourse): number {
+  if (listing.reviewedCourseId) return 2
+  return listing.ruleStatus === 'ready' ? 1 : 0
 }
 

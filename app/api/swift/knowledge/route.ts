@@ -20,7 +20,9 @@ const MAX_PROGRAMME_ENTRIES = 500
  */
 export async function GET() {
   const [{ programmes, source }, { institutions }] = await Promise.all([
-    listSwiftKnowledgeProgrammes(),
+    // The one caller that renders the brochure's prose, so the one caller that
+    // asks for it. Everything else reads the listing columns alone.
+    listSwiftKnowledgeProgrammes({ prose: true }),
     listInstitutions(),
   ])
   const generatedAt = new Date().toISOString()
