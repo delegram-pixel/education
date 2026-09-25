@@ -292,7 +292,7 @@ export function VerdictCard({
 
       <p className="mt-5 text-center text-[0.8125rem] text-muted">
         <Badge tone="outline" className="mr-2">
-          {course.provenance === 'reviewed' ? 'Sample data' : 'Requirement read from IBASS'}
+          {course.provenance === 'reviewed' ? 'Reference data' : 'Requirement read from IBASS'}
         </Badge>
         {/* Two sentences rather than one with a hole in it. A reviewed course has
             a prior-year cut-off to disclaim; a requirement read out of the
@@ -301,7 +301,7 @@ export function VerdictCard({
             than saying plainly what the verdict does and does not rest on. */}
         {course.utmeCutoff === undefined
           ? 'This verdict rests on the requirement IBASS publishes, and is indicative rather than this year’s official position.'
-          : `Requirements and the ${course.utmeCutoff} cut-off shown here are indicative prior-year figures for a demonstration, not this year’s official numbers.`}
+          : `Requirements and the ${course.utmeCutoff} cut-off shown here are indicative prior-year figures used for guidance, not this year’s official numbers.`}
         {/* A reading that had to leave something out says so. The brochure names
             subjects our list has no code for — "Business Management", "Data
             Processing/Computer Studies" — and dropping one from a "choose two

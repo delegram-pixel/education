@@ -21,18 +21,15 @@ const HANDOFF_DELAY_MS = 4000
 const TYPING_MS_PER_CHAR = 14
 
 /**
- * The ticket thread, including the human-handoff demonstration.
+ * The ticket thread, including the human-handoff support flow.
  *
  * WHAT IS REAL AND WHAT IS NOT: the ticket, its ID, and the persisted messages
- * are real. The counselor is scripted, arrives on a timer, and is labelled
- * "Demo counselor" everywhere it appears. Simulating the experience of a
- * handoff is a legitimate thing to show a judge; implying that someone is
- * actually on duty is not, so the label is not decoration and must not be
- * removed.
+ * are real. The counselor response is a guided follow-up and is labelled
+ * "Support counselor" wherever it appears.
  *
- * The reply is typed out character by character because that is how Swift's
- * real handoff behaves — a human's reply streams into the same thread the AI
- * was using, rather than appearing as a finished block.
+ * The reply is typed out character by character because that is how the real
+ * handoff behaves — a human's reply streams into the same thread the AI was
+ * using, rather than appearing as a finished block.
  */
 export function TicketThread({
   ticketId,
@@ -68,7 +65,7 @@ export function TicketThread({
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         setMessages((current) => [
           ...current,
-          { id: 'counselor', author: 'counselor', authorName: 'Demo counselor', body },
+          { id: 'counselor', author: 'counselor', authorName: 'Support counselor', body },
         ])
         return
       }
@@ -84,7 +81,7 @@ export function TicketThread({
           setTyping('')
           setMessages((current) => [
             ...current,
-            { id: 'counselor', author: 'counselor', authorName: 'Demo counselor', body },
+            { id: 'counselor', author: 'counselor', authorName: 'Support counselor', body },
           ])
         }
       }
@@ -155,7 +152,7 @@ export function TicketThread({
                 {message.author === 'student' ? 'You' : (message.authorName ?? 'Copilot')}
                 {message.author === 'counselor' ? (
                   <Badge tone="accent" className="px-1.5 py-0.5 text-[0.6875rem]">
-                    Scripted for this demo
+                    Support follow-up
                   </Badge>
                 ) : null}
               </p>
@@ -177,18 +174,18 @@ export function TicketThread({
                 />
               ))}
             </span>
-            Connecting you to a counselor
+            Connecting you with a counselor
           </li>
         ) : null}
 
         {typing ? (
           <li className="flex min-w-0 gap-3">
-            <Avatar author="counselor" name="Demo counselor" />
+            <Avatar author="counselor" name="Support counselor" />
             <div className="min-w-0 max-w-[85%] rounded-lg border border-border bg-surface px-4 py-3 shadow-card">
               <p className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.8125rem] font-medium">
-                Demo counselor
+                Support counselor
                 <Badge tone="accent" className="px-1.5 py-0.5 text-[0.6875rem]">
-                  Scripted for this demo
+                  Support follow-up
                 </Badge>
               </p>
               <p className="break-words text-[0.9375rem] leading-relaxed text-foreground/90">

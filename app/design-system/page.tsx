@@ -580,7 +580,7 @@ export default function DesignSystemPage() {
           </div>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-3">
-            {/* Primary Button Demo */}
+            {/* Primary Button Example */}
             <div className="flex flex-col gap-3 rounded-lg border border-[var(--color-light-gray)] p-5">
               <span className="text-xs font-bold uppercase tracking-wider text-muted">
                 Primary Button
@@ -594,7 +594,7 @@ export default function DesignSystemPage() {
               </div>
             </div>
 
-            {/* Secondary Button Demo */}
+            {/* Secondary Button Example */}
             <div className="flex flex-col gap-3 rounded-lg border border-[var(--color-light-gray)] p-5">
               <span className="text-xs font-bold uppercase tracking-wider text-muted">
                 Secondary Button (Accent)
@@ -608,7 +608,7 @@ export default function DesignSystemPage() {
               </div>
             </div>
 
-            {/* Ghost / Outline Demo */}
+            {/* Ghost / Outline Example */}
             <div className="flex flex-col gap-3 rounded-lg border border-[var(--color-light-gray)] p-5">
               <span className="text-xs font-bold uppercase tracking-wider text-muted">
                 Ghost / Outline Button
@@ -793,7 +793,7 @@ export default function DesignSystemPage() {
                   </span>
                 </label>
                 <div className="flex items-center gap-2 pt-2 text-xs text-muted">
-                  <span className="font-semibold text-[var(--color-primary-dark)]">Link Demo:</span>
+                  <span className="font-semibold text-[var(--color-primary-dark)]">Example link:</span>
                   <a
                     href="#contrast-matrix"
                     className="text-[var(--color-primary-dark)] underline font-medium hover:bg-[var(--color-accent-light)] px-1 py-0.5 rounded transition-colors"
@@ -816,7 +816,7 @@ export default function DesignSystemPage() {
           </p>
 
           <div className="mt-6 grid gap-6 md:grid-cols-2">
-            {/* Loading Spinner Demo */}
+            {/* Loading Spinner Example */}
             <div className="flex flex-col justify-between rounded-lg border border-[var(--color-light-gray)] bg-[var(--color-primary-dark)] p-6 text-white">
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-accent-light)]">
@@ -903,7 +903,7 @@ export default function DesignSystemPage() {
                   <th className="px-6 py-4">Ratio</th>
                   <th className="px-6 py-4">WCAG AA Standard</th>
                   <th className="px-6 py-4">Real Context</th>
-                  <th className="px-6 py-4">Sample Preview</th>
+                  <th className="px-6 py-4">Reference Preview</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--color-light-gray)]">
@@ -1050,7 +1050,7 @@ export default function DesignSystemPage() {
               </div>
             </div>
 
-            {/* Live Preview Panel */}
+            {/* Reference Preview Panel */}
             <div
               className="flex flex-col justify-between rounded-lg p-6 shadow-sm border border-black/10"
               style={{ backgroundColor: customBg, color: customFg }}

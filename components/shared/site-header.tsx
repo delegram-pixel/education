@@ -12,7 +12,6 @@ import { cn } from '@/lib/utils'
 
 const NAV = [
   { href: '/check', label: 'Check eligibility' },
-  { href: '/schools', label: 'Schools' },
   { href: '/guide', label: 'Registration guides' },
   { href: '/quiz', label: 'Course fit' },
   // { href: '/design-system', label: 'Color System Guide' },

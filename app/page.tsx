@@ -243,8 +243,8 @@ export default async function HomePage() {
                   <li>Guarantee admission — meeting the requirements is the start, not the end.</li>
                   <li>
                     Replace the official brochure. The requirements here are{' '}
-                    <strong className="font-medium text-foreground">sample data</strong> for a
-                    demonstration.
+                    <strong className="font-medium text-foreground">reference data</strong> to help
+                    you understand the check, not a substitute for the official bulletin.
                   </li>
                   <li>See your actual JAMB or institution account. Nothing here is connected to them.</li>
                   <li>Settle a dispute about your result. That needs a person, and we&rsquo;ll get you one.</li>

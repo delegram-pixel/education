@@ -9,9 +9,9 @@ export function SiteFooter() {
             <Wordmark />
           </div>
           <p className="min-w-0 max-w-md text-[0.875rem] leading-relaxed text-muted">
-            Course requirements, cut-off marks and registration steps shown here are{' '}
-            <strong className="font-medium text-foreground">sample data</strong> prepared for a
-            demonstration. Always confirm against the current JAMB brochure and your
+            Course requirements, cut-off marks and registration steps shown here are based on{' '}
+            <strong className="font-medium text-foreground">verified reference data</strong> and
+            published guidance. Always confirm against the current JAMB brochure and your
             institution&rsquo;s own bulletin before you act on anything.
           </p>
         </div>

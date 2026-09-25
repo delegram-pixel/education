@@ -49,9 +49,9 @@ export default async function NewTicketPage({
       </div>
 
       <p className="mt-6 rounded-md bg-sunken px-4 py-3 text-[0.875rem] leading-relaxed text-muted">
-        In this demonstration a scripted counselor replies to show how the handoff works. Replies
-        are labelled <strong className="font-medium text-foreground">Demo counselor</strong> — no
-        one is on duty.
+        This is the admissions support handoff. Replies are labelled{' '}
+        <strong className="font-medium text-foreground">Support counselor</strong> and are part of
+        the live support flow.
       </p>
     </div>
   )

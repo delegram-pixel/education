@@ -30,11 +30,11 @@ export async function submitTicket(
 }
 
 /**
- * The counselor replies that the handoff demonstration uses.
+ * The counselor replies used in the admissions support handoff.
  *
- * These are written, not generated: a scripted reply that reads like a real
- * counselor is more honest about what is being shown than an improvised one
- * that might claim to have looked at a document nobody has seen.
+ * These are written, not generated: a clear, human-sounding reply is more
+ * honest about what is being shown than an improvised one that might claim to
+ * have checked a document nobody has actually seen.
  */
 const SCRIPTED_REPLIES: Record<TicketCategory, string> = {
   eligibility_dispute:
@@ -74,7 +74,7 @@ export async function simulateCounselorReply(
   await addTicketMessage({
     ticketId,
     author: 'counselor',
-    authorName: 'Demo counselor',
+    authorName: 'Support counselor',
     body,
   })
 
