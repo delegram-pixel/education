@@ -38,6 +38,16 @@ export type ProgrammeRule = {
   name: string
   institution: string
   department: string | null
+  /**
+   * The UTME combination IBASS publishes for this programme.
+   *
+   * Part of the row rather than of the read, and it is here so a verdict built
+   * from a read rule can name the subjects a student has to register for. The
+   * model never touches it — `readRule` reads the O'level sentence and nothing
+   * else — so this is mirrored data carried alongside the rule, not a claim the
+   * reader made.
+   */
+  utmeSubjects: string[]
 }
 
 /**
@@ -92,6 +102,7 @@ async function loadStored(programmeId: string): Promise<ProgrammeRule | null> {
         name: catalogueProgrammes.name,
         institution: catalogueInstitutions.name,
         department: catalogueProgrammes.department,
+        utmeSubjects: catalogueProgrammes.utmeSubjects,
       })
       .from(programmeRules)
       .innerJoin(catalogueProgrammes, eq(programmeRules.programmeId, catalogueProgrammes.id))
@@ -112,6 +123,7 @@ async function loadStored(programmeId: string): Promise<ProgrammeRule | null> {
       name: row.name,
       institution: row.institution,
       department: row.department,
+      utmeSubjects: row.utmeSubjects,
     }
   } catch (error) {
     console.warn('[rules] could not read a stored rule:', error)
@@ -184,6 +196,7 @@ async function readAndStore(programmeId: string): Promise<RuleReadResult> {
           name: catalogueProgrammes.name,
           institution: catalogueInstitutions.name,
           department: catalogueProgrammes.department,
+          utmeSubjects: catalogueProgrammes.utmeSubjects,
           olevelRequirements: catalogueProgrammes.olevelRequirements,
         })
         .from(catalogueProgrammes)
@@ -208,6 +221,7 @@ async function readAndStore(programmeId: string): Promise<RuleReadResult> {
     name: programme.name,
     institution: programme.institution,
     department: programme.department,
+    utmeSubjects: programme.utmeSubjects,
   }
 
   const sourceText = htmlToText(programme.olevelRequirements ?? '')

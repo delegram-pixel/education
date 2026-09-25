@@ -86,10 +86,21 @@ export function subjectName(code: SubjectCode): string {
 }
 
 /** "Physics and Chemistry" / "Physics, Chemistry and Biology" */
-export function listSubjects(codes: SubjectCode[]): string {
-  const names = codes.map(subjectName)
+export function listNames(names: string[]): string {
   if (names.length <= 1) return names[0] ?? ''
   return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+}
+
+/**
+ * The same sentence, built from codes.
+ *
+ * Split out from `listNames` so the one joining implementation serves both a
+ * list we hold as codes and a list IBASS published as prose — see
+ * `EligibilitySubject.utmeSubjects`, which cannot be mapped to codes without
+ * dropping the entries that have none.
+ */
+export function listSubjects(codes: SubjectCode[]): string {
+  return listNames(codes.map(subjectName))
 }
 
 /** Subjects a student cannot remove from the form — every course needs them. */
@@ -278,10 +289,15 @@ export type Course = {
  * the reviewed path passes one straight through untouched; a catalogue
  * programme satisfies it too, carrying only the rule that was read for it.
  *
- * The two UTME fields are optional because the two paths genuinely differ: we
- * hold a reviewed UTME rule and a prior-year cut-off for the three courses a
- * person wrote up, and for nothing else. They are optional rather than required
- * and faked, because a made-up cut-off is a number a student would plan around.
+ * The UTME fields are optional because the two paths genuinely differ. We hold a
+ * reviewed UTME rule and a prior-year cut-off for the three courses a person
+ * wrote up, and for nothing else. They are optional rather than required and
+ * faked, because a made-up cut-off is a number a student would plan around.
+ *
+ * `utmeSubjects` is the same distinction seen from the other side. The brochure
+ * read gives us no rule, but it does give us the subject list IBASS publishes —
+ * so a read course has something true to say about UTME and, before this field
+ * existed, said nothing.
  */
 export type EligibilitySubject = {
   name: string
@@ -291,6 +307,17 @@ export type EligibilitySubject = {
   utmeRule?: UtmeRule
   /** Indicative, prior-year. Absent for a rule read from the brochure. */
   utmeCutoff?: number
+  /**
+   * The UTME combination exactly as IBASS publishes it.
+   *
+   * Names, not codes, and deliberately not folded into `utmeRule`. The brochure
+   * writes "Government/History" and "Data Processing/Computer Studies", which
+   * have no code — and mapping the entries that do have one would silently drop
+   * the ones that do not, turning a four-subject combination into a
+   * three-subject one and sending a student to register for the wrong UTME.
+   * Nothing here is a reading of ours: it is the brochure's list, repeated.
+   */
+  utmeSubjects?: string[]
 }
 
 /**

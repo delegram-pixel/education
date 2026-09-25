@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { checkEligibility, normaliseResults } from '@/lib/eligibility/engine'
 import { getCourse } from '@/lib/db/courses.data'
-import { isCredit, resultSetSchema, type Grade, type OLevelResult, type SubjectCode } from '@/lib/types'
+import { isCredit, resultSetSchema, type EligibilitySubject, type Grade, type OLevelResult, type SubjectCode } from '@/lib/types'
 
 const medicine = getCourse('medicine-unilag')!
 const computerScience = getCourse('computer-science-unilag')!
@@ -188,6 +188,64 @@ describe('verdict language', () => {
     const v = checkEligibility(medicine, r({ ENG: 'B2', MTH: 'B3', BIO: 'A1', CHM: 'B2', PHY: 'C4' }))
     expect(v.nextSteps[0]).toContain('Biology')
     expect(v.nextSteps.join(' ')).toContain(String(medicine.utmeCutoff))
+  })
+})
+
+describe('checkEligibility — UTME subjects on a course read from the brochure', () => {
+  /**
+   * A catalogue programme as `/check` sees one: an O'level rule read out of the
+   * brochure, and the UTME list IBASS publishes for the same row. No `utmeRule`
+   * — nobody wrote one — and no cut-off, for the same reason.
+   *
+   * This is the Rivers State University ECONOMICS case: every read course used
+   * to fall through to "check this course's subject combination in IBASS" even
+   * though the combination was in the row we had just read the requirement from.
+   */
+  const brochureRead: EligibilitySubject = {
+    name: 'ECONOMICS',
+    institutionShort: 'Rivers State University',
+    olevelRule: {
+      minCredits: 5,
+      mandatory: ['ENG', 'MTH', 'ECO'],
+      anyOf: [{ subjects: ['GOV', 'GEO', 'HIS'], count: 2, label: 'social science subjects' }],
+      maxSittings: 2,
+    },
+    utmeSubjects: ['English Language', 'Economics', 'Government', 'Mathematics'],
+  }
+
+  const eligible = r({ ENG: 'B2', MTH: 'C4', ECO: 'B3', GOV: 'C5', HIS: 'C6' })
+
+  it('names the combination the brochure lists', () => {
+    const v = checkEligibility(brochureRead, eligible)
+
+    expect(v.status).toBe('eligible')
+    expect(v.nextSteps[0]).toBe(
+      'Register for UTME with English Language, Economics, Government and Mathematics — the combination IBASS lists for this course.',
+    )
+  })
+
+  it('no longer sends the student to IBASS for a list we are already holding', () => {
+    const v = checkEligibility(brochureRead, eligible)
+    expect(v.nextSteps.join(' ')).not.toContain('check this course’s subject combination')
+  })
+
+  it('still sends them to IBASS when the mirror lists no combination', () => {
+    // An empty list is a real state — the mirror holds no UTME subjects for
+    // thousands of its programmes. "Register for UTME with ." would be worse
+    // than the sentence it replaced.
+    const v = checkEligibility({ ...brochureRead, utmeSubjects: [] }, eligible)
+
+    expect(v.nextSteps[0]).toContain('check this course’s subject combination in IBASS')
+  })
+
+  it('does not dress the brochure’s list up as a rule we wrote', () => {
+    // A reviewed course keeps the sentence it always had. Repeating what IBASS
+    // publishes is not the same claim as a person having checked it, and this
+    // is the assertion that keeps the two apart.
+    const v = checkEligibility(medicine, r({ ENG: 'B2', MTH: 'B3', BIO: 'A1', CHM: 'B2', PHY: 'C4' }))
+
+    expect(v.nextSteps[0]).toContain('Register for UTME with')
+    expect(v.nextSteps[0]).not.toContain('IBASS lists')
   })
 })
 

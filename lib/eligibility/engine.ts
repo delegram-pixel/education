@@ -15,6 +15,7 @@
 import {
   isBetterGrade,
   isCredit,
+  listNames,
   listSubjects,
   subjectName,
   type EligibilitySubject,
@@ -182,18 +183,25 @@ function buildNextSteps(subject: EligibilitySubject, v: VerdictCore): string[] {
   const steps: string[] = []
 
   if (v.status === 'eligible') {
-    const { utmeRule, utmeCutoff } = subject
+    const { utmeRule, utmeCutoff, utmeSubjects } = subject
 
-    // The two branches here are the whole reason `EligibilitySubject` exists.
-    // A reviewed course carries the UTME combination we hold for it; a rule read
-    // out of the brochure carries nothing about UTME, because the sentence we
-    // read was about O'level credits. Naming a combination we do not hold, or a
-    // cut-off we never had, would be inventing the two numbers a student is most
-    // likely to act on.
+    // Three cases, in descending order of what we actually hold. A reviewed
+    // course carries a combination a person wrote; a course read out of the
+    // brochure carries the list IBASS publishes for it, verbatim; and only when
+    // we hold neither is the student sent to go and look it up.
+    //
+    // The third case used to be the only one a read course ever got, including
+    // the ones whose combination was sitting in the row we had just read the
+    // requirement out of. Naming a combination we do not hold would still be
+    // inventing the thing a student is most likely to act on — which is why the
+    // brochure's list is repeated as the brochure's list, and not dressed up as
+    // a rule of ours.
     steps.push(
       utmeRule
         ? `Register for UTME with ${listSubjects([...utmeRule.compulsory, ...utmeRule.chooseFrom.slice(0, utmeRule.choose)])}.`
-        : 'Register for UTME — check this course’s subject combination in IBASS before you choose your subjects.',
+        : utmeSubjects?.length
+          ? `Register for UTME with ${listNames(utmeSubjects)} — the combination IBASS lists for this course.`
+          : 'Register for UTME — check this course’s subject combination in IBASS before you choose your subjects.',
     )
 
     if (utmeCutoff !== undefined) {

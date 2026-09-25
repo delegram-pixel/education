@@ -116,6 +116,10 @@ export async function findCheckTarget(id: string): Promise<CheckTarget | null> {
     // looked at.
     blurb: null,
     olevelRule: rule.rule,
+    // The one thing a read course does say about UTME. We hold it in the mirror
+    // and, without this line, the verdict sent the student to IBASS to look up a
+    // combination we were already carrying.
+    utmeSubjects: rule.utmeSubjects,
     provenance: 'read',
   }
 }
