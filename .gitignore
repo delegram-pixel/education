@@ -33,5 +33,8 @@ coverage/
 
 # Keep project docs if you want them tracked
 !README.md
+# The API contract we hand to integrators. Ignored by the rule above, and a spec
+# that cannot be committed cannot be handed over.
+!docs/*.md
 # !BUILD_PROMPT.md
 # !prd.md

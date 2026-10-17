@@ -68,9 +68,38 @@ SWIFT_API_KEY="your_swift_api_key"
 # Do NOT prefix this with NEXT_PUBLIC_. It is read on the server at request
 # time, and a NEXT_PUBLIC_ variable is inlined into the browser bundle.
 GROQ_API_KEY=""
+
+# Keys for the read-only catalogue API at /api/v1, which integrators (Swift
+# Agents) call from their servers. Comma-separated, so a second integrator or a
+# key rotation can be added without downtime. Read at request time.
+#
+# Fails closed: if this is empty or unset, every /api/v1 request gets a 503
+# rather than an open door. Locally that means putting a key here to use the API
+# at all. The same rule as above applies — no NEXT_PUBLIC_ prefix, because
+# anything the browser can read is a key given away.
+CATALOGUE_API_KEYS=""
 ```
 
 Note: the app is designed to work without a database configured as well. If `DATABASE_URL` is missing, it falls back to static data in many flows.
+
+## Catalogue API (v1)
+
+A versioned, read-only JSON API over the admissions catalogue — institutions,
+programmes, brochure-quoted requirements, and the subject/grade vocabulary. It
+serves public data only: no endpoint reads a student record.
+
+- Contract for integrators: [`docs/swift-catalogue-api.md`](docs/swift-catalogue-api.md), also as [a styled page](docs/swift-catalogue-api.html)
+- OpenAPI 3.1 document: `GET /api/v1/openapi.json` (generate a client from it)
+
+```bash
+# with CATALOGUE_API_KEYS="dev-key" in .env.local
+curl -s -H "Authorization: Bearer dev-key" \
+  'http://localhost:3000/api/v1/institutions?state=Lagos&limit=3'
+```
+
+The knowledge-base endpoint at `GET /api/swift/knowledge` is separate and
+unchanged — it renders Markdown for Swift's file-based knowledge base, where
+`/api/v1` is a JSON API for their servers to integrate against.
 
 ## Run the application in development mode
 Start the app locally:
@@ -266,11 +295,13 @@ distinct courses students pick, not by how many students pick them. A `429` is t
 failed read — nothing is stored, the student sees the ordinary unreviewed panel, and the next request
 tries again.
 
-Run the sync on a scheduled server job to keep the mirror fresh. Once deployed, add this URL as a **website knowledge source** in the Swift Agents dashboard:
+Run the sync on a scheduled server job to keep the mirror fresh. Swift's knowledge base ingests files rather than URLs, so fetch a snapshot and upload it:
 
 ```text
-https://your-domain.example/api/swift/knowledge
+https://your-domain.example/api/swift/knowledge?download=1
 ```
+
+`?download=1` saves the response as `admission-copilot-catalogue.md`; leave the parameter off to read the document in a browser before uploading it. Re-upload after each sync — nothing pushes an update, so an uploaded copy is a snapshot until it is replaced, and the `Generated:` timestamp inside the file is the only thing that says how old it is. The endpoint queries the catalogue on each cache miss, so it only needs to be public if Swift fetches it themselves; uploading the file yourself lets it stay behind your own authentication.
 
 The endpoint is plain Markdown, carries the source link for each programme it lists, and labels the fallback sample data if the national catalogue has not been imported. Because the national catalogue runs past twelve thousand programmes, the programme section is capped at the first 500 and says so in the document itself — Swift is told that a programme missing from it is outside the sample, not evidence that an institution does not offer it. The institution list is complete. JAMB identifies IBASS as the official e-brochure and eligibility source; students should still verify the current session in IBASS and the institution's own bulletin.
 

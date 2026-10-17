@@ -14,11 +14,33 @@ export const revalidate = 3600
 const MAX_PROGRAMME_ENTRIES = 500
 
 /**
- * A plain-text knowledge document for Swift's website knowledge source.
- * Add this public URL in Swift's dashboard after deployment. Keeping it as
- * Markdown makes it useful to a crawler and straightforward to audit.
+ * The name the document is saved under.
+ *
+ * Swift's knowledge base ingests FILES, so the ordinary path for this endpoint
+ * is: fetch it, save it, upload it. Without a filename the browser names the
+ * saved file after the last path segment — `knowledge`, with no extension — and
+ * the person doing the upload has nothing to tell one snapshot from the next.
+ * Naming it here keeps that in one place rather than in whoever's clipboard.
  */
-export async function GET() {
+const KNOWLEDGE_FILENAME = 'admission-copilot-catalogue.md'
+
+/**
+ * The knowledge document, generated on demand from the catalogue.
+ *
+ * Swift's knowledge base ingests this as an uploaded FILE rather than by
+ * crawling a URL, so this endpoint's job is to produce a current snapshot:
+ * fetch it, save it, upload it. That makes staleness the operator's problem
+ * rather than the crawler's, which is why the document carries its own
+ * `Generated:` timestamp — the uploaded copy has no other way to say how old it
+ * is. Markdown keeps it readable by whatever consumes it and easy to audit.
+ */
+export async function GET(request: Request) {
+  // A browser renders `text/markdown` inline, which is right for reading the
+  // document and right for a crawler, but wrong for the upload step: it leaves
+  // the operator with a rendered page and no file. `?download=1` asks for the
+  // save instead. The default stays inline so the URL remains readable in a tab.
+  const download = new URL(request.url).searchParams.get('download') === '1'
+
   const [{ programmes, source }, { institutions }] = await Promise.all([
     // The one caller that renders the brochure's prose, so the one caller that
     // asks for it. Everything else reads the listing columns alone.
@@ -112,6 +134,12 @@ ${programmeNote}${entries}\n`
     headers: {
       'Content-Type': 'text/markdown; charset=utf-8',
       'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+      // `inline` on the default path is not decoration: it is what tells the
+      // browser the filename to offer if the operator saves the page they are
+      // already reading, so both routes out of here land on the same name.
+      'Content-Disposition': `${
+        download ? 'attachment' : 'inline'
+      }; filename="${KNOWLEDGE_FILENAME}"`,
     },
   })
 }

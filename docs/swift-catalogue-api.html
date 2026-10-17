@@ -1,0 +1,499 @@
+<title>Admission Copilot Catalogue API v1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Zilla+Slab:wght@600;700&display=swap">
+<style>
+  /* Layout: single-column reference doc, ~68ch measure, hairline-ruled sections */
+  :root {
+    --bg: #f6f8f7;
+    --surface: #ffffff;
+    --fg: #141f1d;
+    --muted: #586864;
+    --border: #dae2df;
+    --accent: #0e6b62;
+    --accent-soft: #e4f1ee;
+    --warn: #8f5400;
+    --warn-soft: #fbf1df;
+    --code-bg: #eef3f2;
+    --display: "Zilla Slab", Georgia, "Times New Roman", serif;
+    --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0d1514;
+      --surface: #141e1d;
+      --fg: #e5edeb;
+      --muted: #91a29e;
+      --border: #26332f;
+      --accent: #52d1c4;
+      --accent-soft: #16302c;
+      --warn: #e2a95f;
+      --warn-soft: #2a2114;
+      --code-bg: #17211f;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1514;
+    --surface: #141e1d;
+    --fg: #e5edeb;
+    --muted: #91a29e;
+    --border: #26332f;
+    --accent: #52d1c4;
+    --accent-soft: #16302c;
+    --warn: #e2a95f;
+    --warn-soft: #2a2114;
+    --code-bg: #17211f;
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.62;
+    padding-inline: 16px;
+    padding-block: 44px 80px;
+  }
+  .wrap { max-width: 720px; margin-inline: auto; }
+
+  h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.2; }
+  h1 { font-size: clamp(2rem, 6vw, 2.7rem); font-weight: 700; letter-spacing: -0.015em; }
+  h2 {
+    font-size: 1.3rem; font-weight: 600; margin-top: 3rem;
+    padding-top: 1.1rem; border-top: 1px solid var(--border);
+  }
+  h3 { font-size: 1.02rem; font-weight: 600; margin-top: 1.7rem; font-family: var(--body); }
+  p { margin: 0.85rem 0 0; }
+  a { color: var(--accent); }
+  a:focus-visible, .toc a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+
+  .eyebrow {
+    font-family: var(--mono); font-size: 0.72rem; font-weight: 500;
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted);
+  }
+  .lede { font-size: 1.06rem; color: var(--muted); margin-top: 0.7rem; max-width: 60ch; }
+
+  .sig {
+    margin-top: 2rem; background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent); border-radius: 6px; padding: 1rem 1.15rem;
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.7rem 0.85rem;
+  }
+  .method {
+    font-family: var(--mono); font-size: 0.74rem; font-weight: 500; letter-spacing: 0.1em;
+    background: var(--accent-soft); color: var(--accent);
+    padding: 0.22rem 0.5rem; border-radius: 4px;
+  }
+  .path { font-family: var(--mono); font-size: 0.95rem; word-break: break-all; min-width: 0; }
+
+  .toc { margin-top: 1.7rem; display: flex; flex-wrap: wrap; gap: 0.4rem 0.45rem; }
+  .toc a {
+    font-family: var(--mono); font-size: 0.75rem; text-decoration: none;
+    color: var(--muted); border: 1px solid var(--border);
+    padding: 0.26rem 0.55rem; border-radius: 4px;
+  }
+  .toc a:hover { color: var(--accent); border-color: var(--accent); }
+
+  .tablewrap { overflow-x: auto; margin-top: 1.1rem; }
+  table { border-collapse: collapse; width: 100%; min-width: 22rem; font-size: 0.92rem; }
+  th, td { text-align: left; padding: 0.6rem 0.85rem 0.6rem 0; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th {
+    font-family: var(--mono); font-size: 0.7rem; font-weight: 500; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted); padding-bottom: 0.45rem;
+  }
+  td:first-child { white-space: nowrap; padding-right: 1.2rem; font-weight: 500; }
+  td code, p code, li code { font-family: var(--mono); font-size: 0.87em; background: var(--code-bg); padding: 0.1rem 0.32rem; border-radius: 3px; }
+
+  pre {
+    font-family: var(--mono); font-size: 0.82rem; line-height: 1.7;
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px;
+    padding: 0.9rem 1rem; overflow-x: auto; margin: 1.1rem 0 0;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; }
+
+  ul { margin: 0.85rem 0 0; padding-left: 1.15rem; }
+  li { margin-top: 0.4rem; }
+  li::marker { color: var(--muted); }
+
+  .note {
+    margin-top: 1.2rem; background: var(--warn-soft); border-radius: 6px;
+    padding: 0.95rem 1.1rem; border-left: 3px solid var(--warn);
+  }
+  .note strong { color: var(--warn); }
+  .note p { margin-top: 0.4rem; }
+  .note p:first-child { margin-top: 0; }
+
+  .steps { counter-reset: s; list-style: none; padding-left: 0; margin-top: 1.1rem; }
+  .steps li {
+    counter-increment: s; position: relative; padding-left: 2.1rem; margin-top: 0.85rem;
+  }
+  .steps li::before {
+    content: counter(s); position: absolute; left: 0; top: 0.06rem;
+    width: 1.4rem; height: 1.4rem; border-radius: 50%;
+    background: var(--accent-soft); color: var(--accent);
+    font-family: var(--mono); font-size: 0.76rem; font-weight: 500;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  footer {
+    margin-top: 3.2rem; padding-top: 1.1rem; border-top: 1px solid var(--border);
+    font-size: 0.85rem; color: var(--muted);
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <p class="eyebrow">Admission Copilot</p>
+  <h1>Catalogue API v1</h1>
+  <p class="lede">A read-only JSON API over the Nigerian admissions catalogue — institutions, programmes, the requirements JAMB's IBASS e-brochure publishes, and the subject and grade vocabulary. Built for the Swift Agents integration.</p>
+
+  <div class="sig">
+    <span class="method">GET</span>
+    <span class="path">https://&lt;your-domain&gt;/api/v1</span>
+  </div>
+
+  <nav class="toc">
+    <a href="#not">What it is not</a>
+    <a href="#auth">Auth</a>
+    <a href="#envelope">Envelope</a>
+    <a href="#paging">Pagination</a>
+    <a href="#endpoints">Endpoints</a>
+    <a href="#errors">Errors</a>
+    <a href="#limits">Rate limits</a>
+    <a href="#versioning">Versioning</a>
+    <a href="#known">Known limits</a>
+    <a href="#start">Quick start</a>
+  </nav>
+
+  <p>Everything here is already public admissions information, sourced from the JAMB IBASS e-brochure and each institution's own bulletin. The API holds no student data and has no route that reads any. An OpenAPI 3.1 document is served at <code>/api/v1/openapi.json</code> — generate a client from it rather than transcribing this page.</p>
+
+  <h2 id="not">What this API is not</h2>
+  <p><strong>It returns no verdict.</strong> There is no endpoint that takes a student's grades and answers eligible or not eligible. Requirements are returned as the brochure's own words, quoted, with the URL they came from — never as a decision.</p>
+  <p>Where Admission Copilot's checker holds a reviewed course for a programme, that programme carries a <code>checkerUrl</code> pointing into it. That link is the thing to hand a student. Automated eligibility decisions are produced only by the in-app checker, because only it can say which rule set it decided from.</p>
+  <ul>
+    <li>Do not compute eligibility from <code>olevelRequirements</code>. It is prose, in the brochure's words, and it changes between sessions.</li>
+    <li>Do not treat a programme's absence as evidence. A filtered page is a page — read <code>pagination.total</code> before saying anything about the whole catalogue.</li>
+  </ul>
+
+  <h2 id="auth">Authentication</h2>
+  <p>Every request needs a key, sent either way:</p>
+  <pre><code>Authorization: Bearer &lt;your-key&gt;
+x-api-key: &lt;your-key&gt;</code></pre>
+  <p><code>Authorization</code> wins if both are present. Keys are issued by Admission Copilot — ask for one; they are not self-service.</p>
+  <p>A missing or wrong key is <code>401 unauthorized</code>. If the server has no keys configured at all it answers <code>503 unavailable</code> instead, which is a fault on our side rather than a problem with your key.</p>
+
+  <div class="note">
+    <p><strong>The key is server-side.</strong> Do not put it in a browser bundle, a mobile app, or a public repository. Anything a user can read is a key given away.</p>
+  </div>
+
+  <h2 id="envelope">The envelope</h2>
+  <p>Every successful response is the same shape:</p>
+  <pre><code>{
+  "data": [],
+  "pagination": { "limit": 25, "nextCursor": "eyJ2IjoxLCJvIjoyNX0", "total": 3412 },
+  "meta": {
+    "source": "ibass",
+    "generatedAt": "2026-10-15T09:12:44.108Z",
+    "apiVersion": "1",
+    "disclaimer": "Catalogue presence is not an offer of admission, ..."
+  }
+}</code></pre>
+  <p>Every failure is the same shape:</p>
+  <pre><code>{ "error": { "code": "not_found", "message": "No programme in the catalogue has the id `unilag:9999`." } }</code></pre>
+  <p>One unwrapper and one error handler covers the whole API.</p>
+
+  <h3>meta.source</h3>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Value</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><code>ibass</code></td><td>The JAMB IBASS mirror answered. This is the full catalogue.</td></tr>
+        <tr><td><code>sample</code></td><td>The mirror was unreachable and a small built-in sample answered instead. <strong>A degraded read</strong> — fewer institutions than the national catalogue, and not representative. Do not present it as the catalogue.</td></tr>
+        <tr><td><code>built-in</code></td><td>The answer did not come from the catalogue at all — the subject and grade vocabulary is compiled into the app. Appears on <code>/subjects</code> and <code>/openapi.json</code> only.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><code>sample</code> is not an error: the request succeeded, and the data is real. It is a statement about coverage.</p>
+
+  <h3>meta.disclaimer</h3>
+  <p>A fixed sentence, carried on every response so you never have to compose your own:</p>
+  <pre><code>Catalogue presence is not an offer of admission, and a programme count is
+what this catalogue holds rather than what an institution offers. Requirements,
+fees and deadlines change each session — verify them in the current JAMB IBASS
+record and the institution's own bulletin.</code></pre>
+  <p>Render it wherever you display catalogue data.</p>
+
+  <h2 id="paging">Pagination</h2>
+  <p>Every list endpoint takes <code>limit</code> and <code>cursor</code>.</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Parameter</th><th>Default</th><th>Range</th></tr></thead>
+      <tbody>
+        <tr><td><code>limit</code></td><td>25</td><td>1–100</td></tr>
+        <tr><td><code>cursor</code></td><td>—</td><td><code>pagination.nextCursor</code> from the previous page</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><code>limit</code> is <strong>clamped, not refused</strong>: <code>limit=1000</code> returns 100 and says so in <code>pagination.limit</code>. <code>limit=lots</code> is a <code>400</code>, because a non-numeric limit is a bug in your code and answering it with 25 would leave you wondering why paging never ends.</p>
+  <p><code>cursor</code> is opaque. Pass back exactly what you were given; do not construct one, parse one, or increment anything inside it. <code>nextCursor</code> is <code>null</code> on the last page — that is the signal to stop, not an empty page.</p>
+  <p><code>pagination.total</code> is the number of rows matching your filters <strong>across every page</strong>. It is the only thing that distinguishes "these are all the schools in Lagos" from "these are the first 25 of 62".</p>
+  <pre><code>cursor=''
+while :; do
+  page=$(curl -s -H "Authorization: Bearer $KEY" \
+    "https://&lt;your-domain&gt;/api/v1/programmes?limit=100&amp;cursor=$cursor")
+  echo "$page" | jq -r '.data[].id'
+  cursor=$(echo "$page" | jq -r '.pagination.nextCursor')
+  [ "$cursor" = "null" ] &amp;&amp; break
+done</code></pre>
+
+  <h2 id="endpoints">Endpoints</h2>
+
+  <h3><code>GET /meta</code></h3>
+  <p>Which catalogue answered, how large it is, and how fresh.</p>
+  <pre><code>{
+  "data": {
+    "institutions": 466,
+    "programmes": 21384,
+    "lastUpdatedAt": "2026-10-13T02:00:11.000Z",
+    "disclaimer": "Catalogue presence is not an offer of admission, ..."
+  },
+  "meta": { "source": "ibass", ... }
+}</code></pre>
+  <p><code>lastUpdatedAt</code> is when the mirror was last taken from IBASS — not when this response was built (<code>meta.generatedAt</code> is that) and not when any requirement was last reviewed. It is <code>null</code> on the sample path.</p>
+  <p>Use it to size your copy: "21,384 programmes across 466 institutions" is a better sentence than implying your first page is everything.</p>
+
+  <h3><code>GET /institutions</code></h3>
+  <p>Institutions in the catalogue, with how many programmes each currently lists.</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Parameter</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>state</code></td><td>State name, e.g. <code>Lagos</code>. Case-insensitive.</td></tr>
+        <tr><td><code>type</code></td><td>Institution type, e.g. <code>Federal University</code>. Case-insensitive.</td></tr>
+        <tr><td><code>category</code></td><td><code>University</code>, <code>Polytechnic</code>, <code>College of Education</code> and similar. Case-insensitive.</td></tr>
+        <tr><td><code>q</code></td><td>Free text over the name, the state and the institution type.</td></tr>
+        <tr><td><code>limit</code>, <code>cursor</code></td><td>See <a href="#paging">Pagination</a>.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <pre><code>curl -s -H "Authorization: Bearer $KEY" \
+  'https://&lt;your-domain&gt;/api/v1/institutions?state=Lagos&amp;limit=3'</code></pre>
+  <pre><code>{
+  "data": [
+    {
+      "id": "unilag",
+      "name": "UNIVERSITY OF LAGOS, AKOKA, LAGOS STATE",
+      "shortName": "UNIVERSITY OF LAGOS",
+      "type": "Federal University",
+      "category": "University",
+      "state": "Lagos",
+      "programmeCount": 62,
+      "sourceUrl": "https://ibass.jamb.gov.ng/brochure-by-institution",
+      "sourceUpdatedAt": "2026-10-13T02:00:11.000Z"
+    }
+  ],
+  "pagination": { "limit": 3, "nextCursor": "eyJ2IjoxLCJvIjozfQ", "total": 12 },
+  "meta": { "source": "ibass", ... }
+}</code></pre>
+  <ul>
+    <li><code>id</code> is JAMB's own identifier and is stable across a re-import. Hold it.</li>
+    <li><code>name</code> is what the brochure prints — often <code>NAME, CITY, STATE</code>. <code>shortName</code> is the same institution as a sentence refers to it; use that when composing prose, because "does UNIVERSITY OF LAGOS, AKOKA, LAGOS STATE offer Nursing?" is not a sentence anybody writes.</li>
+    <li><code>programmeCount</code> is what this catalogue holds, <strong>not</strong> what the institution offers. Never repeat it as the latter.</li>
+    <li><code>state</code>, <code>type</code> and <code>category</code> are <code>null</code> when the catalogue records none. That is not a state named <code>""</code>.</li>
+  </ul>
+
+  <h3><code>GET /institutions/{id}</code></h3>
+  <p>One institution, with its programmes paged. <code>limit</code> and <code>cursor</code> page the <strong>programmes</strong>, not the institution.</p>
+  <pre><code>{
+  "data": {
+    "institution": { "id": "unilag", "name": "...", "programmeCount": 62, ... },
+    "programmes": [ { "id": "unilag:1042", "name": "Nursing Science", ... } ]
+  },
+  "pagination": { "limit": 25, "nextCursor": "...", "total": 62 },
+  "meta": { "source": "ibass", ... }
+}</code></pre>
+  <p>The <code>{id}</code> accepts either the institution's <code>id</code> or the exact <code>name</code> the brochure prints. Prefer the id.</p>
+  <p>An unknown id is <code>404</code>. An institution the catalogue knows about but holds no programmes for is <strong>not</strong> a 404 — it is returned with <code>programmeCount: 0</code> and an empty programme list, because those are different facts and the API keeps them apart.</p>
+  <p>Programmes here are summaries. For requirement prose, fetch <code>/programmes/{id}</code> for the one you are about to quote.</p>
+
+  <h3><code>GET /programmes</code></h3>
+  <p>Programmes, filtered and paged.</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Parameter</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>institutionId</code></td><td>An <code>id</code> from <code>/institutions</code>.</td></tr>
+        <tr><td><code>state</code></td><td>Programmes at institutions in that state.</td></tr>
+        <tr><td><code>q</code></td><td>Free text over the programme name <strong>and</strong> the institution's name, so <code>q=UNILAG nursing</code> narrows to that school. Not parsed as language — send <code>q=nursing&amp;state=Lagos</code>, not <code>q=nursing in Lagos</code>.</td></tr>
+        <tr><td><code>subject</code></td><td>A subject <strong>code</strong> from <code>/subjects</code>, e.g. <code>BIO</code>. Not a name: <code>subject=Biology</code> is a <code>400</code>.</td></tr>
+        <tr><td><code>limit</code>, <code>cursor</code></td><td>See <a href="#paging">Pagination</a>.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <pre><code>{
+  "data": [
+    {
+      "id": "unilag:1042",
+      "institutionId": "unilag",
+      "institution": "UNIVERSITY OF LAGOS, AKOKA, LAGOS STATE",
+      "institutionShort": "UNIVERSITY OF LAGOS",
+      "name": "Nursing Science",
+      "department": "Nursing",
+      "status": "Available",
+      "utmeSubjects": ["English Language", "Biology", "Chemistry", "Physics"],
+      "sourceUrl": "https://ibass.jamb.gov.ng/brochure-by-institution",
+      "sourceUpdatedAt": "2026-10-13T02:00:11.000Z",
+      "reviewedCourseId": "unilag-nursing",
+      "ruleStatus": "ready"
+    }
+  ],
+  "pagination": { "limit": 5, "nextCursor": null, "total": 4 },
+  "meta": { "source": "ibass", ... }
+}</code></pre>
+  <p><code>utmeSubjects</code> is <strong>as the brochure publishes it</strong> — names, not codes, and not mapped to the <code>/subjects</code> vocabulary. The brochure writes entries such as <code>Government/History</code> and <code>Data Processing/Computer Studies</code>, which have no code; folding the rest into codes would silently turn a four-subject combination into a three-subject one. Match on the labels loosely, or use the <code>subject</code> filter and let us do it.</p>
+  <p>No requirement prose in a listing. That is deliberate: the prose is roughly 15KB of HTML per programme and a page of 30 search results renders none of it.</p>
+  <p><code>reviewedCourseId</code> is set only where the checker holds a reviewed course for the programme. That is rare — a handful of courses against twenty thousand programmes — so <code>null</code> is the ordinary case. <code>ruleStatus</code> says whether a requirement has been read: <code>ready</code>, <code>no-source</code> (reading was done and the brochure states none), or <code>null</code> (nobody has looked yet).</p>
+
+  <h3><code>GET /programmes/{id}</code></h3>
+  <p>One programme, with its full requirement prose.</p>
+  <pre><code>{
+  "data": {
+    "id": "unilag:1042",
+    "name": "Nursing Science",
+    "utmeSubjects": ["English Language", "Biology", "Chemistry", "Physics"],
+    "olevelRequirements": "Five credits including English Language, Mathematics, Biology and Chemistry.",
+    "directEntryRequirements": null,
+    "remarks": "...",
+    "sourceUrl": "https://ibass.jamb.gov.ng/brochure-by-institution",
+    "checkerUrl": "https://&lt;your-domain&gt;/check?course=unilag-nursing",
+    "reviewedCourseId": "unilag-nursing",
+    "ruleStatus": "ready"
+  },
+  "meta": { "source": "ibass", ... }
+}</code></pre>
+  <p>Every prose field is the brochure's own words, quoted. <code>sourceUrl</code> is where they came from; cite it.</p>
+  <ul>
+    <li><code>olevelRequirements: null</code> means the brochure states none. It does <strong>not</strong> mean a requirement of nothing, and it says nothing about any student.</li>
+    <li><code>checkerUrl</code> is non-null only where the checker holds a reviewed course. This is the correct next step to offer: quote the requirements, then link here.</li>
+    <li>The id is stable. <code>unilag:1042</code> is JAMB's identifier namespaced with the institution's.</li>
+  </ul>
+
+  <h3><code>GET /subjects</code></h3>
+  <p>The vocabulary, so you map what a student types the way this catalogue does.</p>
+  <pre><code>{
+  "data": {
+    "subjects": [ { "code": "ENG", "name": "English Language" }, { "code": "MTH", "name": "Mathematics" } ],
+    "grades": [
+      { "code": "A1", "credit": true,  "meaning": "..." },
+      { "code": "C6", "credit": true,  "meaning": "..." },
+      { "code": "D7", "credit": false, "meaning": "..." },
+      { "code": "E8", "credit": false, "meaning": "..." },
+      { "code": "F9", "credit": false, "meaning": "..." }
+    ],
+    "alwaysRequired": ["ENG", "MTH"]
+  },
+  "meta": { "source": "built-in", ... }
+}</code></pre>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Grades</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>A1–C6</td><td>Credits — they satisfy a subject requirement.</td></tr>
+        <tr><td>D7, E8</td><td>Passes. <strong>They satisfy nothing.</strong></td></tr>
+        <tr><td>F9</td><td>Fail.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">
+    <p><strong>Serve the grade table; do not infer your own.</strong> Every eligibility mistake in this domain comes from treating a D7 or an E8 as a credit. <code>credit</code> here is the same function the eligibility engine decides with, so what you render and what the checker applies cannot come apart.</p>
+  </div>
+  <p><code>alwaysRequired</code> is English Language and Mathematics — the subjects no programme lets a student drop. Call this once at startup and cache it; it changes only when the app is deployed.</p>
+
+  <h3><code>GET /openapi.json</code></h3>
+  <p>The contract as an OpenAPI 3.1 document, with <code>servers</code> set to the address you reached it at.</p>
+  <pre><code>curl -s -H "Authorization: Bearer $KEY" \
+  'https://&lt;your-domain&gt;/api/v1/openapi.json' &gt; openapi.json
+npx openapi-typescript openapi.json -o ./catalogue.d.ts</code></pre>
+
+  <h2 id="errors">Errors</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Code</th><th>Status</th><th>Cause</th></tr></thead>
+      <tbody>
+        <tr><td><code>unauthorized</code></td><td>401</td><td>No key, or one this deployment does not accept.</td></tr>
+        <tr><td><code>bad_request</code></td><td>400</td><td>A parameter could not be read — a non-numeric <code>limit</code>, a cursor we did not issue, a subject that is not a code.</td></tr>
+        <tr><td><code>not_found</code></td><td>404</td><td>No such institution or programme.</td></tr>
+        <tr><td><code>rate_limited</code></td><td>429</td><td>Over the rate limit. Honour <code>Retry-After</code>.</td></tr>
+        <tr><td><code>unavailable</code></td><td>503</td><td>Either no keyring is configured on the server (ours to fix), or a read failed.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><code>unavailable</code> is not a code to treat as fatal — the next request may well succeed.</p>
+  <p>Messages are written for you, not for a student. Do not display them to a user; switch on <code>code</code> and write your own copy. The status per code is fixed API-wide, so <code>bad_request</code> never means 400 on one endpoint and 422 on another.</p>
+
+  <h2 id="limits">Rate limits</h2>
+  <p><strong>60 requests per key per minute.</strong> Every response carries:</p>
+  <pre><code>X-RateLimit-Limit: 60
+X-RateLimit-Remaining: 58
+X-RateLimit-Reset: 1760522400     # Unix seconds</code></pre>
+  <p>A <code>429</code> also carries <code>Retry-After</code> in seconds. Cache <code>/subjects</code> rather than re-fetching it.</p>
+  <div class="note">
+    <p><strong>Read this honestly: the limit is a runaway guard, not a metered quota.</strong></p>
+    <p>The handlers run on serverless instances, so the window lives in one instance's memory. Ten instances serve ten windows, and a cold start serves a fresh one. A caller over the limit on one instance can be under it on the next.</p>
+    <p>Responses are <code>Cache-Control: private</code>, so <strong>no shared cache sits between you and the database</strong>: a request that is not already in your own client's cache reaches a reader. That is deliberate (see <em>Freshness and caching</em>), but it means the rate limit really is the only brake. If you genuinely need a higher rate or a hard guarantee, say so and we will arrange it rather than have you discover the limit's edges.</p>
+  </div>
+
+  <h3>Freshness and caching</h3>
+  <div class="tablewrap">
+    <table>
+      <tbody>
+        <tr><td><code>Cache-Control</code></td><td><code>private, max-age=300</code></td></tr>
+        <tr><td>Errors</td><td><code>no-store</code>, always</td></tr>
+        <tr><td><code>meta.generatedAt</code></td><td>When this response was built</td></tr>
+        <tr><td><code>lastUpdatedAt</code></td><td>When the mirror was last taken from IBASS</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>The catalogue itself moves when the scheduled IBASS sync runs, not when you request it, so a five-minute client-side cache costs you nothing.</p>
+  <p>The header is <code>private</code> rather than <code>public</code> because every endpoint here requires a key. A shared cache keys on the URL alone — it cannot tell a request that presented one from a request that did not — so a publicly cached response would be handed to callers who never authenticated. Caching the response in your own client is both safe and supported; caching it in a CDN on our behalf is not something the API opts into.</p>
+
+  <h2 id="versioning">Versioning</h2>
+  <p>The version is in the path (<code>/api/v1</code>) and echoed in <code>meta.apiVersion</code>.</p>
+  <p>Within v1, <strong>additive change is expected</strong>: new fields may appear on any response, and new optional query parameters may be accepted. Write your client to ignore what it does not read. A field is only removed or repurposed under a new version in the path.</p>
+
+  <h2 id="known">Known limits</h2>
+  <ul>
+    <li><strong>No verdict endpoint.</strong> By design — see <a href="#not">What this API is not</a>.</li>
+    <li><strong>No fees, deadlines, or portal screens.</strong> Deliberately excluded; they change per session and the app routes students to the official source instead.</li>
+    <li><strong>Requirement prose on detail reads only.</strong> A listing carries the subject combination, not the prose. One extra request per programme you quote.</li>
+    <li><strong><code>reviewedCourseId</code> is usually <code>null</code>.</strong> The checker has reviewed a small number of courses against a catalogue of twenty thousand programmes. A checker link is the exception, not the rule — offer it where it exists, the brochure URL everywhere else.</li>
+    <li><strong><code>total</code> counts what the catalogue holds.</strong> It is not a count of places anyone will be admitted to.</li>
+  </ul>
+
+  <h2 id="start">Quick start</h2>
+  <pre><code>KEY='the-key-we-issued-you'
+BASE='https://&lt;your-domain&gt;/api/v1'
+
+# size the catalogue
+curl -s -H "Authorization: Bearer $KEY" "$BASE/meta" | jq '.data'
+
+# schools in Lagos
+curl -s -H "Authorization: Bearer $KEY" "$BASE/institutions?state=Lagos&amp;limit=5" | jq '.data[].name'
+
+# nursing at UNILAG
+curl -s -H "Authorization: Bearer $KEY" "$BASE/programmes?institutionId=unilag&amp;q=nursing" | jq '.data[].id'
+
+# and what it asks for
+curl -s -H "Authorization: Bearer $KEY" "$BASE/programmes/unilag:1042" | jq '.data'
+
+# the grade table you must not invent
+curl -s -H "Authorization: Bearer $KEY" "$BASE/subjects" | jq '.data.grades'</code></pre>
+
+  <footer>
+    <p>Admission Copilot · Catalogue API v1 · A read-only view of public admissions data. No student data is served by any endpoint here.</p>
+  </footer>
+
+</div>

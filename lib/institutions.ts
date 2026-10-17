@@ -205,6 +205,19 @@ export function searchInstitutions(
 }
 
 /**
+ * Whether a row's value is the one being filtered for, ignoring case.
+ *
+ * The browse page's own values come from the facets, so they are already exact
+ * and this changes nothing there. It matters for the API, where a value arrives
+ * from a client who read the docs rather than from a dropdown: `?state=lagos`
+ * selecting nothing, silently, is the kind of empty result a caller cannot tell
+ * apart from "no schools in Lagos".
+ */
+function same(value: string | null, asked: string): boolean {
+  return value !== null && value.toLowerCase() === asked.trim().toLowerCase()
+}
+
+/**
  * Whether this row survives the active filters.
  *
  * `omit` drops one dimension. Counting a filter's own options has to ignore the
@@ -218,17 +231,13 @@ function matchesFilters(
   needle: string,
   omit?: Dimension,
 ): boolean {
-  if (omit !== 'state' && filters.state !== null && stateOption(institution) !== filters.state) {
+  if (omit !== 'state' && filters.state !== null && !same(stateOption(institution), filters.state)) {
     return false
   }
-  if (omit !== 'type' && filters.type !== null && trimmed(institution.institutionType) !== filters.type) {
+  if (omit !== 'type' && filters.type !== null && !same(trimmed(institution.institutionType), filters.type)) {
     return false
   }
-  if (
-    omit !== 'category' &&
-    filters.category !== null &&
-    trimmed(institution.category) !== filters.category
-  ) {
+  if (omit !== 'category' && filters.category !== null && !same(trimmed(institution.category), filters.category)) {
     return false
   }
 
