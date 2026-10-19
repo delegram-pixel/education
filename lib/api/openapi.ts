@@ -7,7 +7,7 @@
  * derived from the types in `views.ts` by hand, because a type cannot describe
  * itself and a hand-written schema that drifts is worse than none.
  *
- * WHY IT EXISTS: Swift's engineers asked for an API to build against. A document
+ * WHY IT EXISTS: an integrator asked for an API to build against. A document
  * they can generate a typed client from is a shorter path to a working
  * integration — and a wrong one on our side — than a page of prose they
  * transcribe into request builders.
@@ -342,7 +342,7 @@ const PARAMETERS: Record<string, Record<string, unknown>> = {
     required: false,
     schema: { type: 'string' },
     description:
-      'Free text, matched as a substring ignoring case. On `/institutions` over the name, the state and the institution type; on `/programmes` over the programme name and the institution\'s name, so `q=UNILAG nursing` narrows to that school. Not parsed as language: send `q=nursing&state=Lagos` rather than `q=nursing in Lagos`.',
+      'One contiguous substring, matched ignoring case. On `/institutions` over the name, the state and the institution type; on `/programmes` over the programme name and the institution\'s name — so `q=University of Lagos` narrows to that school and `q=nursing` finds Nursing programmes. It is not tokenised: `q=UNILAG nursing` matches nothing. Combine filters with separate parameters: `q=nursing&state=Lagos`.',
   },
   institutionId: {
     name: 'institutionId',

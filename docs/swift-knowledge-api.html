@@ -1,0 +1,304 @@
+<title>Swift Knowledge API</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Zilla+Slab:wght@600;700&display=swap">
+<style>
+  /* Layout: single-column reference doc, ~68ch measure, hairline-ruled sections */
+  :root {
+    --bg: #f6f8f7;
+    --surface: #ffffff;
+    --fg: #141f1d;
+    --muted: #586864;
+    --border: #dae2df;
+    --accent: #0e6b62;
+    --accent-soft: #e4f1ee;
+    --warn: #8f5400;
+    --warn-soft: #fbf1df;
+    --code-bg: #eef3f2;
+    --display: "Zilla Slab", Georgia, "Times New Roman", serif;
+    --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0d1514;
+      --surface: #141e1d;
+      --fg: #e5edeb;
+      --muted: #91a29e;
+      --border: #26332f;
+      --accent: #52d1c4;
+      --accent-soft: #16302c;
+      --warn: #e2a95f;
+      --warn-soft: #2a2114;
+      --code-bg: #17211f;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1514;
+    --surface: #141e1d;
+    --fg: #e5edeb;
+    --muted: #91a29e;
+    --border: #26332f;
+    --accent: #52d1c4;
+    --accent-soft: #16302c;
+    --warn: #e2a95f;
+    --warn-soft: #2a2114;
+    --code-bg: #17211f;
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.62;
+    padding-inline: 16px;
+    padding-block: 44px 80px;
+  }
+  .wrap { max-width: 720px; margin-inline: auto; }
+
+  h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.2; }
+  h1 { font-size: clamp(2rem, 6vw, 2.7rem); font-weight: 700; letter-spacing: -0.015em; }
+  h2 {
+    font-size: 1.3rem; font-weight: 600; margin-top: 3rem;
+    padding-top: 1.1rem; border-top: 1px solid var(--border);
+  }
+  h3 { font-size: 1.02rem; font-weight: 600; margin-top: 1.7rem; font-family: var(--body); }
+  p { margin: 0.85rem 0 0; }
+  a { color: var(--accent); }
+  a:focus-visible, .toc a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+
+  .eyebrow {
+    font-family: var(--mono); font-size: 0.72rem; font-weight: 500;
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted);
+  }
+  .lede { font-size: 1.06rem; color: var(--muted); margin-top: 0.7rem; max-width: 60ch; }
+
+  .sig {
+    margin-top: 2rem; background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent); border-radius: 6px; padding: 1rem 1.15rem;
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.7rem 0.85rem;
+  }
+  .method {
+    font-family: var(--mono); font-size: 0.74rem; font-weight: 500; letter-spacing: 0.1em;
+    background: var(--accent-soft); color: var(--accent);
+    padding: 0.22rem 0.5rem; border-radius: 4px;
+  }
+  .path { font-family: var(--mono); font-size: 0.95rem; word-break: break-all; min-width: 0; }
+
+  .toc { margin-top: 1.7rem; display: flex; flex-wrap: wrap; gap: 0.4rem 0.45rem; }
+  .toc a {
+    font-family: var(--mono); font-size: 0.75rem; text-decoration: none;
+    color: var(--muted); border: 1px solid var(--border);
+    padding: 0.26rem 0.55rem; border-radius: 4px;
+  }
+  .toc a:hover { color: var(--accent); border-color: var(--accent); }
+
+  .tablewrap { overflow-x: auto; margin-top: 1.1rem; }
+  table { border-collapse: collapse; width: 100%; min-width: 22rem; font-size: 0.92rem; }
+  th, td { text-align: left; padding: 0.6rem 0.85rem 0.6rem 0; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th {
+    font-family: var(--mono); font-size: 0.7rem; font-weight: 500; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted); padding-bottom: 0.45rem;
+  }
+  td:first-child { white-space: nowrap; padding-right: 1.2rem; font-weight: 500; }
+  td code, p code, li code { font-family: var(--mono); font-size: 0.87em; background: var(--code-bg); padding: 0.1rem 0.32rem; border-radius: 3px; }
+
+  pre {
+    font-family: var(--mono); font-size: 0.82rem; line-height: 1.7;
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px;
+    padding: 0.9rem 1rem; overflow-x: auto; margin: 1.1rem 0 0;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; }
+
+  ul { margin: 0.85rem 0 0; padding-left: 1.15rem; }
+  li { margin-top: 0.4rem; }
+  li::marker { color: var(--muted); }
+
+  .note {
+    margin-top: 1.2rem; background: var(--warn-soft); border-radius: 6px;
+    padding: 0.95rem 1.1rem; border-left: 3px solid var(--warn);
+  }
+  .note strong { color: var(--warn); }
+  .note p { margin-top: 0.4rem; }
+  .note p:first-child { margin-top: 0; }
+
+  .steps { counter-reset: s; list-style: none; padding-left: 0; margin-top: 1.1rem; }
+  .steps li {
+    counter-increment: s; position: relative; padding-left: 2.1rem; margin-top: 0.85rem;
+  }
+  .steps li::before {
+    content: counter(s); position: absolute; left: 0; top: 0.06rem;
+    width: 1.4rem; height: 1.4rem; border-radius: 50%;
+    background: var(--accent-soft); color: var(--accent);
+    font-family: var(--mono); font-size: 0.76rem; font-weight: 500;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  footer {
+    margin-top: 3.2rem; padding-top: 1.1rem; border-top: 1px solid var(--border);
+    font-size: 0.85rem; color: var(--muted);
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <p class="eyebrow">Admission Copilot</p>
+  <h1>Swift Knowledge API</h1>
+  <p class="lede">A public endpoint that renders the Nigerian admissions catalogue as a single Markdown document, for upload to the Swift Agents knowledge base.</p>
+
+  <div class="sig">
+    <span class="method">GET</span>
+    <span class="path">https://&lt;your-domain&gt;/api/swift/knowledge?download=1</span>
+  </div>
+
+  <nav class="toc">
+    <a href="#endpoint">Endpoint</a>
+    <a href="#document">Document</a>
+    <a href="#status">Catalogue status</a>
+    <a href="#freshness">Freshness</a>
+    <a href="#safety">Safety rules</a>
+    <a href="#register">Uploading</a>
+    <a href="#limits">Limits</a>
+  </nav>
+
+  <h2 id="endpoint">Endpoint</h2>
+  <p>One route, no parameters that change the content. Each fetch is generated from the live catalogue, so a current copy is always one request away. Drop <code>?download=1</code> to read the document in a browser instead of saving it.</p>
+
+  <div class="tablewrap">
+    <table>
+      <tbody>
+        <tr><td>Method</td><td><code>GET</code></td></tr>
+        <tr><td>Authentication</td><td>None. Public by design.</td></tr>
+        <tr><td>Query parameters</td><td><code>download</code> (optional) — <code>1</code> forces a save as a file</td></tr>
+        <tr><td>Request body</td><td>None</td></tr>
+        <tr><td>Response</td><td><code>200 OK</code>, a UTF-8 Markdown document</td></tr>
+        <tr><td>Saved filename</td><td><code>admission-copilot-catalogue.md</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>It is public deliberately. Everything it returns is already public admissions information, sourced from the JAMB IBASS e-brochure and each institution's own bulletin. There is no student data, no session data, and no credential of any kind in the response. Whether it needs to be public is a separate question, answered under <a href="#register">Uploading</a>.</p>
+
+  <h3>Response headers</h3>
+  <pre><code>Content-Type: text/markdown; charset=utf-8
+Cache-Control: public, s-maxage=3600, stale-while-revalidate=86400
+Content-Disposition: inline; filename="admission-copilot-catalogue.md"</code></pre>
+  <p><code>Content-Disposition</code> is <code>attachment</code> instead of <code>inline</code> when <code>download=1</code> is passed. The filename is the same either way.</p>
+
+  <h2 id="document">The document</h2>
+  <p>Four parts, in this order:</p>
+  <ul>
+    <li><strong>Header</strong> — generation timestamp and catalogue status</li>
+    <li><strong>Usage and safety rules</strong> — constraints the agent is instructed to follow</li>
+    <li><strong>Institutions</strong> — every institution held, grouped under a <code>### &lt;State&gt;</code> heading</li>
+    <li><strong>Programmes</strong> — programme records with their requirements</li>
+  </ul>
+
+  <h3>Institutions — complete</h3>
+  <p>Every institution in the catalogue appears, grouped by state:</p>
+  <pre><code>### Lagos
+- University of Lagos (Federal University) — 62 programmes listed
+- Lagos State University (State University) — 48 programmes listed</code></pre>
+  <p>Complete by design, and an institution with no programme detail still appears. The underlying query is a LEFT join, so a school the catalogue knows about but holds no programmes for is listed with a count of <code>0</code> rather than omitted.</p>
+
+  <div class="note">
+    <p><strong>Programmes are capped at 500.</strong></p>
+    <p>When the catalogue exceeds that, the document says so in its own text and instructs the reader that a programme absent from it is outside the sample, and not evidence that the institution does not offer it. School-level questions are answered completely; programme detail beyond the cap is not in the document at all.</p>
+  </div>
+
+  <h3>Programme entries</h3>
+  <p>Each entry carries its own source link:</p>
+  <pre><code>## Nursing Science — University of Lagos
+Department: Nursing
+Status: ...
+UTME subjects: ...
+O-level requirements: ...
+Direct Entry requirements: ...
+Official remarks: ...
+Source: https://...</code></pre>
+  <p>The <code>Official remarks</code> label is not cosmetic. Only a mirrored IBASS row carries IBASS's own words, so the local sample's text is labelled <code>Note</code> instead — crediting it to JAMB would misattribute it.</p>
+
+  <h2 id="status">Catalogue status</h2>
+  <p>The header states which catalogue backed the document:</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Status line</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><code>JAMB IBASS mirror</code></td><td>The national catalogue was read.</td></tr>
+        <tr><td><code>sample fallback only</code></td><td>The database was absent or unreachable; a small local sample was served instead.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <p><strong>Treat <code>sample fallback only</code> as a degraded document.</strong></p>
+    <p>The sample is a handful of institutions, not a national list, so answers drawn from it are not representative. It is served so the endpoint never fails outright, not because it substitutes for the mirror. Refresh the crawl once the mirror is back.</p>
+  </div>
+
+  <h2 id="freshness">Freshness</h2>
+
+  <div class="tablewrap">
+    <table>
+      <tbody>
+        <tr><td>Route revalidation</td><td>3600&nbsp;s</td></tr>
+        <tr><td>Edge cache</td><td><code>s-maxage=3600</code>, <code>stale-while-revalidate=86400</code></td></tr>
+        <tr><td>Authority</td><td>the <code>Generated:</code> timestamp inside the document</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Use the <code>Generated:</code> timestamp rather than the time of the crawl. A response can be served stale for up to 24 hours while it revalidates, and a cached body keeps its original timestamp, so that value is the honest answer to how old the document is. The catalogue behind it is refreshed by a separate scheduled sync job, which is what moves the timestamp forward.</p>
+
+  <h2 id="safety">Safety rules carried in the document</h2>
+  <p>The document instructs the agent to:</p>
+  <ul>
+    <li>Cite the source URL for any programme requirement, and never claim a course is available, or a requirement current, without it</li>
+    <li>Direct students to verify fees, deadlines and portal screens in the current JAMB IBASS record and the institution's own bulletin</li>
+    <li>Never tell a student to pay through a forwarded link — always the official portal, opened by the student</li>
+    <li>Never request, repeat, or handle an OTP, password, PIN, card number, or account credential</li>
+    <li>Say so when a question cannot be answered from a cited official source, and offer a counselor handoff</li>
+  </ul>
+
+  <div class="note">
+    <p><strong>Automated eligibility verdicts are out of scope.</strong></p>
+    <p>Those are produced only by the in-app eligibility checker, which works from reviewed rules. The document states plainly that only that checker may present a reviewed automated verdict. The agent should not read requirements out of this document and then declare a student eligible or ineligible.</p>
+  </div>
+
+  <h2 id="register">Uploading</h2>
+  <ol class="steps">
+    <li>Save a current copy: <code>curl -OJ 'https://&lt;your-domain&gt;/api/swift/knowledge?download=1'</code>. The <code>-OJ</code> flag takes the filename from the response header, so you get <code>admission-copilot-catalogue.md</code>. Opening the URL in a browser works too.</li>
+    <li>Upload that file to the Swift Agents knowledge base.</li>
+    <li>Set the agent's instructions to treat admissions and course-discovery questions as in scope.</li>
+    <li>Re-upload after each catalogue sync. Nothing pushes an update.</li>
+  </ol>
+  <p>Steps 2 and 3 are separate settings. The uploaded file gives the agent facts; it does not widen what the agent is willing to answer, so a narrowly scoped instruction set will keep deflecting admissions questions even with the catalogue uploaded.</p>
+
+  <h3>Does the endpoint have to be public?</h3>
+  <p>Not necessarily, and the answer changes what you deploy.</p>
+  <p>If you do the uploading yourself, the endpoint can stay off the public internet entirely — run it locally, or put it behind your normal authentication, and upload the file you save. A knowledge base that ingests files needs a reachable file, not a reachable URL. This is the safer arrangement, because the endpoint queries the database on every cache miss.</p>
+  <p>If Swift does the integration, they need a URL they can fetch, which means public and unauthenticated as documented above.</p>
+  <p>Decide before deploying. Adding authentication later is easy; withdrawing a public endpoint that has already been crawled and indexed is not.</p>
+
+  <h3>Watch the timestamp</h3>
+  <p>An uploaded file is a snapshot and stays exactly as uploaded. Check the <code>Generated:</code> line before uploading — it is the only thing that distinguishes a stale copy from a fresh one.</p>
+
+  <h2 id="limits">Known limits</h2>
+  <ul>
+    <li><strong>Manual refresh.</strong> Nothing pushes an updated document into the knowledge base. The uploaded file is a snapshot until somebody replaces it, so a stale upload serves stale answers, and the <code>Generated:</code> line is the only warning.</li>
+    <li><strong>500-programme cap.</strong> School-level questions are complete; programme-level depth beyond the cap is absent.</li>
+    <li><strong>No per-institution drill-down.</strong> A <code>/api/swift/knowledge/&lt;institution&gt;</code> route returning one school's full programme list does not exist yet.</li>
+    <li><strong>No fees, deadlines, or portal screens.</strong> Excluded on purpose — they change per session, so the document routes students to the official source instead.</li>
+    <li><strong>Markdown, not JSON.</strong> Intentional: the knowledge base reads text, and a JSON body would present it with syntax rather than sentences. It also keeps the upload auditable — you can read exactly what the agent was given.</li>
+    <li><strong>No rate limiting.</strong> The hour-long edge cache absorbs this in practice, but a cache miss reaches the database.</li>
+  </ul>
+
+  <footer>
+    Admission Copilot — Swift Agents integration. Catalogue sourced from the JAMB IBASS e-brochure; students should verify the current session in IBASS and the institution's own bulletin.
+  </footer>
+
+</div>

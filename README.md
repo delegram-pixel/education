@@ -69,9 +69,9 @@ SWIFT_API_KEY="your_swift_api_key"
 # time, and a NEXT_PUBLIC_ variable is inlined into the browser bundle.
 GROQ_API_KEY=""
 
-# Keys for the read-only catalogue API at /api/v1, which integrators (Swift
-# Agents) call from their servers. Comma-separated, so a second integrator or a
-# key rotation can be added without downtime. Read at request time.
+# Keys for the read-only catalogue API at /api/v1, which integrators call from
+# their servers. Comma-separated, so a second integrator or a key rotation can be
+# added without downtime. Read at request time.
 #
 # Fails closed: if this is empty or unset, every /api/v1 request gets a 503
 # rather than an open door. Locally that means putting a key here to use the API
@@ -88,7 +88,9 @@ A versioned, read-only JSON API over the admissions catalogue — institutions,
 programmes, brochure-quoted requirements, and the subject/grade vocabulary. It
 serves public data only: no endpoint reads a student record.
 
-- Contract for integrators: [`docs/swift-catalogue-api.md`](docs/swift-catalogue-api.md), also as [a styled page](docs/swift-catalogue-api.html)
+- Live reference: `/docs/catalogue-api` on the deployed app — the page to send an integrator
+- Source of that page: [`app/docs/catalogue-api/page.tsx`](app/docs/catalogue-api/page.tsx)
+- Contract for integrators: [`docs/catalogue-api.md`](docs/catalogue-api.md), also as [a styled page](docs/catalogue-api.html)
 - OpenAPI 3.1 document: `GET /api/v1/openapi.json` (generate a client from it)
 
 ```bash

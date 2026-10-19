@@ -3,8 +3,8 @@
  *
  * WHAT THIS HONESTLY IS, because the temptation is to oversell it: a runaway
  * guard. It stops one key in a retry loop from spending a database read per
- * request. It is NOT an enforcement guarantee, and the docs shipped to Swift say
- * so rather than implying otherwise —
+ * request. It is NOT an enforcement guarantee, and the docs shipped to integrators
+ * say so rather than implying otherwise —
  *
  *   - The window lives in the memory of one serverless instance. Ten instances
  *     serve ten windows, and a cold start serves a fresh one. A caller over the

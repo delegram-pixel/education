@@ -3,7 +3,7 @@
  *
  * One module records the version, the page limits, the rate limit and the error
  * codes, so the OpenAPI document served at `/api/v1/openapi.json`, the handlers
- * that enforce those numbers, and the prose shipped to Swift all read the same
+ * that enforce those numbers, and the prose shipped to integrators all read the same
  * values. A client integrating against any one of the three is integrating
  * against the same numbers, and a change to a limit lands in all of them at
  * once rather than in whichever copies somebody remembered.
@@ -93,7 +93,7 @@ export const ERROR_STATUS: Record<ErrorCode, number> = {
  *
  * The same sentence the knowledge document opens with, for the same reason: a
  * client quoting this API back to a student is quoting a catalogue, and a
- * catalogue is not an offer. Swift can render this without composing its own
+ * catalogue is not an offer. An integrator can render this without composing its own
  * wording, which is what stops the disclaimer drifting per integration.
  */
 export const CATALOGUE_DISCLAIMER =

@@ -292,11 +292,12 @@ function programmeFilter(options: {
     options.institutionName ? eq(catalogueInstitutions.name, options.institutionName) : undefined,
     options.institutionId ? eq(catalogueProgrammes.institutionId, options.institutionId) : undefined,
     // `ilike` on both names rather than only the programme's: a student typing a
-    // school's name into the programme search means to narrow to that school, and
-    // "UNILAG nursing" is how they type it. The term is a substring, not a parsed
-    // query — "nursing in Lagos" matches nothing here, because the state is not
-    // part of what this searches. That question is `?q=nursing&state=Lagos`, and
-    // the docs say so rather than leaving a client to find out.
+    // school's name into the programme search means to narrow to that school.
+    // The term is one contiguous substring, not a parsed query: `q=UNIVERSITY OF
+    // LAGOS` narrows to that school and `q=nursing` finds Nursing programmes,
+    // but `q=UNILAG nursing` matches nothing — "UNILAG" is not a substring of
+    // the name IBASS publishes. Combining the two is `?q=nursing&state=Lagos`,
+    // with separate parameters, and the docs say so.
     // A wildcard-free `ilike`, so this is the same case-insensitive equality
     // `filterInstitutions` applies on `/institutions` — `?state=Lagos` selects
     // Lagos on both endpoints, and `?state=River` selects nothing on both rather

@@ -148,7 +148,9 @@
 
   <p class="eyebrow">Admission Copilot</p>
   <h1>Catalogue API v1</h1>
-  <p class="lede">A read-only JSON API over the Nigerian admissions catalogue — institutions, programmes, the requirements JAMB's IBASS e-brochure publishes, and the subject and grade vocabulary. Built for the Swift Agents integration.</p>
+  <p class="lede">A read-only JSON API over the Nigerian admissions catalogue — institutions, programmes, the requirements JAMB's IBASS e-brochure publishes, and the subject and grade vocabulary.</p>
+
+  <p class="lede"><strong>Live version:</strong> <code>/docs/catalogue-api</code> on the app. This page is a snapshot; when the two disagree, the live page is what the API does.</p>
 
   <div class="sig">
     <span class="method">GET</span>
@@ -202,7 +204,7 @@ x-api-key: &lt;your-key&gt;</code></pre>
   }
 }</code></pre>
   <p>Every failure is the same shape:</p>
-  <pre><code>{ "error": { "code": "not_found", "message": "No programme in the catalogue has the id `unilag:9999`." } }</code></pre>
+  <pre><code>{ "error": { "code": "not_found", "message": "No programme in the catalogue has the id `59:9999`." } }</code></pre>
   <p>One unwrapper and one error handler covers the whole API.</p>
 
   <h3>meta.source</h3>
@@ -284,7 +286,7 @@ done</code></pre>
   <pre><code>{
   "data": [
     {
-      "id": "unilag",
+      "id": "&lt;institution-id&gt;",
       "name": "UNIVERSITY OF LAGOS, AKOKA, LAGOS STATE",
       "shortName": "UNIVERSITY OF LAGOS",
       "type": "Federal University",
@@ -309,8 +311,8 @@ done</code></pre>
   <p>One institution, with its programmes paged. <code>limit</code> and <code>cursor</code> page the <strong>programmes</strong>, not the institution.</p>
   <pre><code>{
   "data": {
-    "institution": { "id": "unilag", "name": "...", "programmeCount": 62, ... },
-    "programmes": [ { "id": "unilag:1042", "name": "Nursing Science", ... } ]
+    "institution": { "id": "&lt;institution-id&gt;", "name": "...", "programmeCount": 62, ... },
+    "programmes": [ { "id": "&lt;programme-id&gt;", "name": "Nursing Science", ... } ]
   },
   "pagination": { "limit": 25, "nextCursor": "...", "total": 62 },
   "meta": { "source": "ibass", ... }
@@ -327,7 +329,7 @@ done</code></pre>
       <tbody>
         <tr><td><code>institutionId</code></td><td>An <code>id</code> from <code>/institutions</code>.</td></tr>
         <tr><td><code>state</code></td><td>Programmes at institutions in that state.</td></tr>
-        <tr><td><code>q</code></td><td>Free text over the programme name <strong>and</strong> the institution's name, so <code>q=UNILAG nursing</code> narrows to that school. Not parsed as language — send <code>q=nursing&amp;state=Lagos</code>, not <code>q=nursing in Lagos</code>.</td></tr>
+        <tr><td><code>q</code></td><td>One contiguous, case-insensitive substring, matched against the programme name <strong>and</strong> the institution's name. It is not tokenised: <code>q=University of Lagos</code> narrows to that school and <code>q=nursing</code> finds Nursing programmes, but <code>q=UNILAG nursing</code> matches nothing. Combine filters with separate parameters — <code>q=nursing&amp;state=Lagos</code>.</td></tr>
         <tr><td><code>subject</code></td><td>A subject <strong>code</strong> from <code>/subjects</code>, e.g. <code>BIO</code>. Not a name: <code>subject=Biology</code> is a <code>400</code>.</td></tr>
         <tr><td><code>limit</code>, <code>cursor</code></td><td>See <a href="#paging">Pagination</a>.</td></tr>
       </tbody>
@@ -336,8 +338,8 @@ done</code></pre>
   <pre><code>{
   "data": [
     {
-      "id": "unilag:1042",
-      "institutionId": "unilag",
+      "id": "&lt;programme-id&gt;",
+      "institutionId": "&lt;institution-id&gt;",
       "institution": "UNIVERSITY OF LAGOS, AKOKA, LAGOS STATE",
       "institutionShort": "UNIVERSITY OF LAGOS",
       "name": "Nursing Science",
@@ -361,7 +363,7 @@ done</code></pre>
   <p>One programme, with its full requirement prose.</p>
   <pre><code>{
   "data": {
-    "id": "unilag:1042",
+    "id": "&lt;programme-id&gt;",
     "name": "Nursing Science",
     "utmeSubjects": ["English Language", "Biology", "Chemistry", "Physics"],
     "olevelRequirements": "Five credits including English Language, Mathematics, Biology and Chemistry.",
@@ -378,7 +380,7 @@ done</code></pre>
   <ul>
     <li><code>olevelRequirements: null</code> means the brochure states none. It does <strong>not</strong> mean a requirement of nothing, and it says nothing about any student.</li>
     <li><code>checkerUrl</code> is non-null only where the checker holds a reviewed course. This is the correct next step to offer: quote the requirements, then link here.</li>
-    <li>The id is stable. <code>unilag:1042</code> is JAMB's identifier namespaced with the institution's.</li>
+    <li>The id is stable and opaque: JAMB's own identifier for the programme, namespaced with the institution's (<code>&lt;institution-id&gt;:&lt;programme-id&gt;</code>). Take it from a response and pass it back verbatim — do not construct one.</li>
   </ul>
 
   <h3><code>GET /subjects</code></h3>
@@ -463,6 +465,7 @@ X-RateLimit-Reset: 1760522400     # Unix seconds</code></pre>
   <h2 id="versioning">Versioning</h2>
   <p>The version is in the path (<code>/api/v1</code>) and echoed in <code>meta.apiVersion</code>.</p>
   <p>Within v1, <strong>additive change is expected</strong>: new fields may appear on any response, and new optional query parameters may be accepted. Write your client to ignore what it does not read. A field is only removed or repurposed under a new version in the path.</p>
+  <p>When a breaking change is unavoidable, we will tell you before it ships, using the contact you gave us. Nothing in v1 will stop working without that notice.</p>
 
   <h2 id="known">Known limits</h2>
   <ul>
@@ -477,23 +480,27 @@ X-RateLimit-Reset: 1760522400     # Unix seconds</code></pre>
   <pre><code>KEY='the-key-we-issued-you'
 BASE='https://&lt;your-domain&gt;/api/v1'
 
-# size the catalogue
+# 1. size the catalogue
 curl -s -H "Authorization: Bearer $KEY" "$BASE/meta" | jq '.data'
 
-# schools in Lagos
-curl -s -H "Authorization: Bearer $KEY" "$BASE/institutions?state=Lagos&amp;limit=5" | jq '.data[].name'
+# 2. find a school and hold its id — ids are opaque, so take them from a response
+INSTITUTION=$(curl -s -H "Authorization: Bearer $KEY" \
+  "$BASE/institutions?state=Lagos&amp;limit=1" | jq -r '.data[0].id')
 
-# nursing at UNILAG
-curl -s -H "Authorization: Bearer $KEY" "$BASE/programmes?institutionId=unilag&amp;q=nursing" | jq '.data[].id'
+# 3. that school's programmes
+curl -s -H "Authorization: Bearer $KEY" "$BASE/programmes?institutionId=$INSTITUTION&amp;limit=5" \
+  | jq '.data[] | {id, name}'
 
-# and what it asks for
-curl -s -H "Authorization: Bearer $KEY" "$BASE/programmes/unilag:1042" | jq '.data'
+# 4. read one in full, using an id from the previous response
+PROGRAMME=$(curl -s -H "Authorization: Bearer $KEY" \
+  "$BASE/programmes?institutionId=$INSTITUTION&amp;limit=1" | jq -r '.data[0].id')
+curl -s -H "Authorization: Bearer $KEY" "$BASE/programmes/$PROGRAMME" | jq '.data'
 
-# the grade table you must not invent
+# 5. the grade table you must not invent
 curl -s -H "Authorization: Bearer $KEY" "$BASE/subjects" | jq '.data.grades'</code></pre>
 
   <footer>
-    <p>Admission Copilot · Catalogue API v1 · A read-only view of public admissions data. No student data is served by any endpoint here.</p>
+    <p>Admission Copilot · Catalogue API v1 · 18 October 2026 · A read-only view of public admissions data. No student data is served by any endpoint here.</p>
   </footer>
 
 </div>

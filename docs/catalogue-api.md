@@ -1,12 +1,17 @@
 # Admission Copilot — Catalogue API v1
 
+Version 1 · 18 October 2026
+
+> Live version: `/docs/catalogue-api` on the app. This file is a snapshot; when
+> the two disagree, the page is what the API does.
+
 A read-only JSON API over the Nigerian admissions catalogue behind Admission
 Copilot: institutions, their programmes, the UTME subject combinations and
 requirement prose JAMB's IBASS e-brochure publishes, and the subject and grade
 vocabulary this catalogue uses.
 
-Built for the Swift Agents integration. Everything here is already public; the API
-holds no student data and has no route that reads any.
+Everything here is already public; the API holds no student data and has no route
+that reads any.
 
 Base URL:
 
@@ -80,7 +85,7 @@ Every successful response is the same shape:
 Every failure is the same shape:
 
 ```json
-{ "error": { "code": "not_found", "message": "No programme in the catalogue has the id `unilag:9999`." } }
+{ "error": { "code": "not_found", "message": "No programme in the catalogue has the id `59:9999`." } }
 ```
 
 One unwrapper and one error handler covers the whole API.
@@ -194,7 +199,7 @@ curl -s -H "Authorization: Bearer $KEY" \
 {
   "data": [
     {
-      "id": "unilag",
+      "id": "<institution-id>",
       "name": "UNIVERSITY OF LAGOS, AKOKA, LAGOS STATE",
       "shortName": "UNIVERSITY OF LAGOS",
       "type": "Federal University",
@@ -233,8 +238,8 @@ One institution, with its programmes paged.
 ```json
 {
   "data": {
-    "institution": { "id": "unilag", "name": "...", "programmeCount": 62, ... },
-    "programmes": [ { "id": "unilag:1042", "name": "Nursing Science", ... } ]
+    "institution": { "id": "<institution-id>", "name": "...", "programmeCount": 62, ... },
+    "programmes": [ { "id": "<programme-id>", "name": "Nursing Science", ... } ]
   },
   "pagination": { "limit": 25, "nextCursor": "...", "total": 62 },
   "meta": { "source": "ibass", ... }
@@ -262,21 +267,21 @@ Programmes, filtered and paged.
 |---|---|
 | `institutionId` | An `id` from `/institutions`. |
 | `state` | Programmes at institutions in that state. |
-| `q` | Free text over the programme name **and** the institution's name, so `q=UNILAG nursing` narrows to that school. Not parsed as language — send `q=nursing&state=Lagos`, not `q=nursing in Lagos`. |
+| `q` | One contiguous, case-insensitive substring, matched against the programme name **and** the institution's name. It is not tokenised: `q=University of Lagos` narrows to that school and `q=nursing` finds Nursing programmes, but `q=UNILAG nursing` matches nothing. Combine filters with separate parameters — `q=nursing&state=Lagos`. |
 | `subject` | A subject **code** from `/subjects`, e.g. `BIO`. Not a name: `subject=Biology` is a `400`. |
 | `limit`, `cursor` | See [Pagination](#pagination) |
 
 ```bash
 curl -s -H "Authorization: Bearer $KEY" \
-  'https://<your-domain>/api/v1/programmes?institutionId=unilag&subject=BIO&limit=5'
+  'https://<your-domain>/api/v1/programmes?institutionId=<institution-id>&subject=BIO&limit=5'
 ```
 
 ```json
 {
   "data": [
     {
-      "id": "unilag:1042",
-      "institutionId": "unilag",
+      "id": "<programme-id>",
+      "institutionId": "<institution-id>",
       "institution": "UNIVERSITY OF LAGOS, AKOKA, LAGOS STATE",
       "institutionShort": "UNIVERSITY OF LAGOS",
       "name": "Nursing Science",
@@ -319,7 +324,7 @@ One programme, with its full requirement prose.
 ```json
 {
   "data": {
-    "id": "unilag:1042",
+    "id": "<programme-id>",
     "name": "Nursing Science",
     "utmeSubjects": ["English Language", "Biology", "Chemistry", "Physics"],
     "olevelRequirements": "Five credits including English Language, Mathematics, Biology and Chemistry.",
@@ -341,8 +346,9 @@ came from; cite it.
   a requirement of nothing, and it says nothing about any student.
 - `checkerUrl` is non-null only where the checker holds a reviewed course. This is
   the correct next step to offer: quote the requirements, then link here.
-- The id is stable. `unilag:1042` is JAMB's identifier namespaced with the
-  institution's.
+- The id is stable and opaque: JAMB's own identifier for the programme,
+  namespaced with the institution's (`<institution-id>:<programme-id>`). Take it
+  from a response and pass it back verbatim — do not construct one.
 
 ---
 
@@ -483,6 +489,9 @@ and new optional query parameters may be accepted. Write your client to ignore
 what it does not read. A field is only removed or repurposed under a new version
 in the path.
 
+When a breaking change is unavoidable, we will tell you before it ships, using
+the contact you gave us. Nothing in v1 will stop working without that notice.
+
 ---
 
 ## Known limits
@@ -507,18 +516,22 @@ in the path.
 KEY='the-key-we-issued-you'
 BASE='https://<your-domain>/api/v1'
 
-# size the catalogue
+# 1. size the catalogue
 curl -s -H "Authorization: Bearer $KEY" "$BASE/meta" | jq '.data'
 
-# schools in Lagos
-curl -s -H "Authorization: Bearer $KEY" "$BASE/institutions?state=Lagos&limit=5" | jq '.data[].name'
+# 2. find a school and hold its id — ids are opaque, so take them from a response
+INSTITUTION=$(curl -s -H "Authorization: Bearer $KEY" \
+  "$BASE/institutions?state=Lagos&limit=1" | jq -r '.data[0].id')
 
-# nursing at UNILAG
-curl -s -H "Authorization: Bearer $KEY" "$BASE/programmes?institutionId=unilag&q=nursing"   | jq '.data[].id'
+# 3. that school's programmes
+curl -s -H "Authorization: Bearer $KEY" "$BASE/programmes?institutionId=$INSTITUTION&limit=5" \
+  | jq '.data[] | {id, name}'
 
-# and what it asks for
-curl -s -H "Authorization: Bearer $KEY" "$BASE/programmes/unilag:1042" | jq '.data'
+# 4. read one in full, using an id from the previous response
+PROGRAMME=$(curl -s -H "Authorization: Bearer $KEY" \
+  "$BASE/programmes?institutionId=$INSTITUTION&limit=1" | jq -r '.data[0].id')
+curl -s -H "Authorization: Bearer $KEY" "$BASE/programmes/$PROGRAMME" | jq '.data'
 
-# the grade table you must not invent
+# 5. the grade table you must not invent
 curl -s -H "Authorization: Bearer $KEY" "$BASE/subjects" | jq '.data.grades'
 ```

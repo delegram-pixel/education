@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 import { Wordmark } from '@/components/shared/wordmark'
 
 export function SiteFooter() {
@@ -7,6 +9,12 @@ export function SiteFooter() {
         <div className="flex min-w-0 flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex min-w-0 flex-col gap-2">
             <Wordmark />
+            <Link
+              href="/docs"
+              className="w-fit text-[0.875rem] text-muted underline-offset-4 transition-colors hover:text-foreground hover:underline"
+            >
+              API documentation
+            </Link>
           </div>
           <p className="min-w-0 max-w-md text-[0.875rem] leading-relaxed text-muted">
             Course requirements, cut-off marks and registration steps shown here are based on{' '}
