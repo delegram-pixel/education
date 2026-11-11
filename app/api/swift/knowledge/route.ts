@@ -1,7 +1,36 @@
+import { createRateLimiter } from '@/lib/api/rate-limit'
 import { listInstitutions, listSwiftKnowledgeProgrammes } from '@/lib/db/catalogue'
 import { groupByState } from '@/lib/institutions'
 
 export const revalidate = 3600
+
+/**
+ * A runaway guard for the most expensive public read in the app.
+ *
+ * The document is cached for an hour, so ordinary traffic barely touches the
+ * database; this stops a caller from forcing cold renders in a loop. Like the
+ * catalogue API's limiter, the window lives in one instance's memory and is
+ * honestly not an edge guarantee — see `lib/api/rate-limit.ts`. The route stays
+ * unauthenticated because Swift may fetch it directly; if it ever becomes an
+ * upload-only artefact, a token is the better answer.
+ */
+const knowledgeLimiter = createRateLimiter({
+  requests: 30,
+  windowMs: 60 * 60 * 1000,
+  maxBuckets: 5_000,
+})
+
+function clientKey(request: Request): string {
+  const forwarded = request.headers.get('x-forwarded-for')
+  if (forwarded) return forwarded.split(',')[0]!.trim()
+  return (
+    request.headers.get('x-real-ip') ??
+    request.headers.get('cf-connecting-ip') ??
+    // Every caller behind a proxy that strips these shares one bucket. That is
+    // still a ceiling, just a less useful one.
+    'unknown'
+  )
+}
 
 /**
  * How many programme records the document carries.
@@ -35,6 +64,18 @@ const KNOWLEDGE_FILENAME = 'admission-copilot-catalogue.md'
  * is. Markdown keeps it readable by whatever consumes it and easy to audit.
  */
 export async function GET(request: Request) {
+  const limit = knowledgeLimiter.check(clientKey(request))
+  if (!limit.allowed) {
+    return new Response('Too many requests. Try again shortly.\n', {
+      status: 429,
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-store',
+        'Retry-After': String(Math.max(1, Math.ceil((limit.resetAt - Date.now()) / 1000))),
+      },
+    })
+  }
+
   // A browser renders `text/markdown` inline, which is right for reading the
   // document and right for a crawler, but wrong for the upload step: it leaves
   // the operator with a rendered page and no file. `?download=1` asks for the

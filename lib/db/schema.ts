@@ -14,7 +14,7 @@
  *                failing.
  */
 
-import { index, integer, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { date, index, integer, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
 import type {
   Hotspot,
@@ -125,6 +125,23 @@ export const programmeRules = pgTable('programme_rules', {
   /** Which model produced it. Provenance, for when a better one arrives. */
   model: text('model').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+})
+
+/**
+ * One row per UTC day, holding how many fresh rule reads have been paid for.
+ *
+ * The counter is shared state rather than an in-process one because the bill is
+ * shared state: a per-instance limit multiplies by however many serverless
+ * instances the platform runs. It is incremented immediately before a model
+ * call, so a cache hit or a programme with no requirement text costs nothing.
+ *
+ * `day` is a `date` and not a timestamp: the budget resets at a calendar
+ * boundary, not thirty days after a row was written.
+ */
+export const modelCallBudget = pgTable('model_call_budget', {
+  day: date('day').primaryKey(),
+  calls: integer('calls').notNull().default(0),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
 export const walkthroughs = pgTable('walkthroughs', {

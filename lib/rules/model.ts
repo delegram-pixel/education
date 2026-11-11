@@ -32,6 +32,7 @@
  * request is made. A missing key degrades the feature; it does not break the app.
  */
 
+import { getEnv } from '@/lib/env'
 import {
   buildRulePrompt,
   parseRuleResponse,
@@ -202,7 +203,7 @@ const REPLY_SCHEMA = {
  * than as a key that fails on every request.
  */
 export function hasRuleReader(): boolean {
-  const apiKey = process.env.GROQ_API_KEY
+  const apiKey = getEnv().GROQ_API_KEY
   return Boolean(apiKey && !apiKey.startsWith('your_'))
 }
 
@@ -354,7 +355,7 @@ export async function askModelForRule(input: {
   institution: string
   sourceText: string
 }): Promise<RuleOutcome> {
-  const apiKey = process.env.GROQ_API_KEY
+  const apiKey = getEnv().GROQ_API_KEY
   if (!hasRuleReader() || !apiKey) {
     return ruleFailure('no-key', 'GROQ_API_KEY is not configured')
   }

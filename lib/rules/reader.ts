@@ -197,7 +197,9 @@ export type RuleRead =
  * and two of them are not bugs at all:
  *
  *   `no-key`, `timeout`, `network`, `http-error`   — the call did not land
+ *   `no-database`                                  — nowhere to cache a reading
  *   `rate-limited`                                 — the provider's ceiling
+ *   `session-limit`, `budget-exhausted`            — our own ceiling
  *   `truncated`, `empty-reply`, `bad-json`         — the reply came back wrong
  *   `malformed-reply`, `schema-rejected`           — the reply was not true
  *   `model-unreadable`, `model-uncertain`          — the sentence, or the model
@@ -210,6 +212,8 @@ export type RuleFailureReason =
   | 'network'
   | 'http-error'
   | 'rate-limited'
+  | 'session-limit'
+  | 'budget-exhausted'
   | 'truncated'
   | 'empty-reply'
   | 'bad-json'

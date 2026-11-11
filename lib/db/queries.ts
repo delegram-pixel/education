@@ -11,7 +11,7 @@
  * entirely would be dishonest about what the user is looking at.
  */
 
-import { asc, desc, eq } from 'drizzle-orm'
+import { asc, desc, eq, lt } from 'drizzle-orm'
 
 import { db, tryWrite, withFallback } from '@/lib/db'
 import { COURSES, getCourse } from '@/lib/db/courses.data'
@@ -24,6 +24,7 @@ import {
 } from '@/lib/db/schema'
 import { WALKTHROUGHS, getWalkthrough } from '@/lib/db/walkthroughs.data'
 import { shortInstitutionName } from '@/lib/institutions'
+import { cutoffFor, RETENTION } from '@/lib/retention'
 import { generateTicketId } from '@/lib/utils'
 import type {
   CheckTarget,
@@ -74,7 +75,10 @@ export async function findCourse(id: string): Promise<Course | undefined> {
  * tried and failed to read. Both mean the same thing to a caller — no verdict is
  * available — and the caller renders today's "we have not reviewed this" panel.
  */
-export async function findCheckTarget(id: string): Promise<CheckTarget | null> {
+export async function findCheckTarget(
+  id: string,
+  options: { sessionId?: string | null } = {},
+): Promise<CheckTarget | null> {
   const course = await findCourse(id)
   if (course) {
     return {
@@ -95,7 +99,7 @@ export async function findCheckTarget(id: string): Promise<CheckTarget | null> {
   // possible rejection of anything else — including a stale or hand-typed id.
   if (!id.includes(':')) return null
 
-  const { rule } = await readRule(id)
+  const { rule } = await readRule(id, options)
   // Null when the read failed and null when the brochure states no requirement
   // at all. The two are deliberately not told apart here: neither leaves us a
   // rule to decide on, and the caller renders the same "we have not reviewed
@@ -208,6 +212,7 @@ export async function savePersonaResult(input: {
 
 export type TicketRecord = {
   id: string
+  sessionId: string
   category: string
   subject: string
   body: string
@@ -313,6 +318,77 @@ export async function addTicketMessage(input: {
       .set({ updatedAt: new Date(), status: input.author === 'counselor' ? 'assigned' : undefined })
       .where(eq(tickets.id, input.ticketId))
   })
+}
+
+/* -------------------------------------------------------------------------- */
+/* Retention and deletion                                                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Delete everything this browser's session has stored.
+ *
+ * Deliberately not a transaction: the Neon HTTP driver does not support them,
+ * and a partial delete is still better than refusing to delete. Tickets go
+ * first because they hold free text and are the most sensitive rows; checks and
+ * quiz results follow. A failure part-way therefore leaves the least sensitive
+ * data for a retry, not the most sensitive. Ticket messages go with their ticket
+ * through the foreign key's cascade.
+ *
+ * Rules are not touched. They are catalogue derivations, not student data.
+ *
+ * Returns false when there is no database or a delete failed, so the caller can
+ * say what actually happened instead of claiming success.
+ */
+export async function deleteSessionData(sessionId: string): Promise<boolean> {
+  if (!db) return false
+
+  try {
+    await db.delete(tickets).where(eq(tickets.sessionId, sessionId))
+    await db.delete(eligibilityChecks).where(eq(eligibilityChecks.sessionId, sessionId))
+    await db.delete(personaResults).where(eq(personaResults.sessionId, sessionId))
+    return true
+  } catch (error) {
+    console.warn('[db] deleteSessionData failed:', error)
+    return false
+  }
+}
+
+export type PruneCounts = {
+  checks: number
+  personas: number
+  tickets: number
+}
+
+/**
+ * Delete rows past their retention window.
+ *
+ * Run from `yarn data:prune` on a schedule. Counts are returned because a prune
+ * that deleted nothing and one that failed look identical from the outside.
+ */
+export async function pruneExpiredData(now: Date = new Date()): Promise<PruneCounts> {
+  if (!db) return { checks: 0, personas: 0, tickets: 0 }
+
+  const checks = await db
+    .delete(eligibilityChecks)
+    .where(lt(eligibilityChecks.createdAt, cutoffFor(RETENTION.checksDays, now)))
+    .returning({ id: eligibilityChecks.id })
+
+  const personas = await db
+    .delete(personaResults)
+    .where(lt(personaResults.createdAt, cutoffFor(RETENTION.personaDays, now)))
+    .returning({ id: personaResults.id })
+
+  // Messages follow their ticket through the FK cascade.
+  const removedTickets = await db
+    .delete(tickets)
+    .where(lt(tickets.createdAt, cutoffFor(RETENTION.ticketsDays, now)))
+    .returning({ id: tickets.id })
+
+  return {
+    checks: checks.length,
+    personas: personas.length,
+    tickets: removedTickets.length,
+  }
 }
 
 export { WALKTHROUGHS, COURSES }

@@ -7,6 +7,7 @@ import { VerdictCard } from '@/components/eligibility/verdict-card'
 import { Badge } from '@/components/ui/badge'
 import { Arrow, Button } from '@/components/ui/button'
 import { findCheck, findCheckTarget } from '@/lib/db/queries'
+import { isExpired, RETENTION } from '@/lib/retention'
 
 export const metadata: Metadata = {
   title: 'A shared eligibility result',
@@ -25,6 +26,11 @@ export default async function SharedResultPage({ params }: { params: Promise<{ i
   const check = await findCheck(id)
 
   if (!check) notFound()
+
+  // A shared link is a snapshot, not a permanent record. After the retention
+  // window it stops resolving; the prune job will remove the row at the same
+  // boundary, and this check makes the page honest even before the job runs.
+  if (isExpired(check.createdAt, RETENTION.sharedResultDays)) notFound()
 
   // Resolved through the same function the check itself went through, so a
   // shared link shows the same verdict it showed when it was made.

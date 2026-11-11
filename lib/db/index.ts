@@ -14,6 +14,7 @@
 import { neon, neonConfig } from '@neondatabase/serverless'
 import { drizzle } from 'drizzle-orm/neon-http'
 
+import { getEnv } from '@/lib/env'
 import * as schema from './schema'
 
 /**
@@ -41,7 +42,7 @@ const DB_TIMEOUT_MS = 10_000
 neonConfig.fetchFunction = (input: RequestInfo | URL, init?: RequestInit) =>
   fetch(input, { ...init, signal: AbortSignal.timeout(DB_TIMEOUT_MS) })
 
-const connectionString = process.env.DATABASE_URL
+const connectionString = getEnv().DATABASE_URL
 
 export const dbConfigured = Boolean(connectionString)
 

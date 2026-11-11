@@ -12,9 +12,10 @@
  * deliberately not NEXT_PUBLIC_, so in the browser they read as `undefined` and
  * this would report the widget missing on a deployment that has it.
  */
+
+import { getEnv } from '@/lib/env'
 export function hasSwiftCredentials(): boolean {
-  const companyId = process.env.SWIFT_COMPANY_ID
-  const apiKey = process.env.SWIFT_API_KEY
+  const { SWIFT_COMPANY_ID: companyId, SWIFT_API_KEY: apiKey } = getEnv()
 
   return Boolean(
     companyId &&

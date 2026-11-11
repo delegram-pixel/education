@@ -42,3 +42,15 @@ export async function ensureSessionId(): Promise<string> {
   })
   return id
 }
+
+/**
+ * Forget the current session id.
+ *
+ * Called after a visitor deletes their data, so the next visit starts from a
+ * clean identity rather than reusing the id whose rows were just removed.
+ * Server Action / Route Handler only, for the same reason as `ensureSessionId`.
+ */
+export async function clearSessionId(): Promise<void> {
+  const jar = await cookies()
+  jar.delete(SESSION_COOKIE)
+}

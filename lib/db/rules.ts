@@ -22,7 +22,13 @@
 
 import { eq } from 'drizzle-orm'
 
+import {
+  checkRuleReadAllowance,
+  noteRuleReadFailure,
+  ruleReadCoolingDown,
+} from '@/lib/action-limits'
 import { db, tryWrite } from '@/lib/db'
+import { consumeRuleReadBudget } from '@/lib/db/budget'
 import { catalogueInstitutions, catalogueProgrammes, programmeRules } from '@/lib/db/schema'
 import { askModelForRule, hasRuleReader, RULE_MODEL } from '@/lib/rules/model'
 import { htmlToText, sourceHash, type RuleFailureReason } from '@/lib/rules/reader'
@@ -76,6 +82,16 @@ export type RuleReadResult = {
   detail?: string
   /** True when this came out of the store rather than from a fresh read. */
   cached: boolean
+}
+
+export type RuleReadOptions = {
+  /**
+   * The anonymous session asking. Limits are applied per session, so a caller
+   * that can supply one should. `null` or absent means "no session identity"
+   * (a render path that cannot set cookies, or an operator-run script); the
+   * database budget still applies in that case.
+   */
+  sessionId?: string | null
 }
 
 /**
@@ -170,7 +186,10 @@ async function store(
  * so the same event can be counted and named by whoever is watching rather than
  * being indistinguishable from every other way a read can fail.
  */
-export async function readRule(programmeId: string): Promise<RuleReadResult> {
+export async function readRule(
+  programmeId: string,
+  options: RuleReadOptions = {},
+): Promise<RuleReadResult> {
   if (!db) return { rule: null, reason: 'no-database', cached: false }
   if (!hasRuleReader()) {
     return { rule: null, reason: 'no-key', detail: 'GROQ_API_KEY is not configured', cached: false }
@@ -182,13 +201,16 @@ export async function readRule(programmeId: string): Promise<RuleReadResult> {
   const existing = inFlight.get(programmeId)
   if (existing) return existing
 
-  const pending = readAndStore(programmeId).finally(() => inFlight.delete(programmeId))
+  const pending = readAndStore(programmeId, options).finally(() => inFlight.delete(programmeId))
   inFlight.set(programmeId, pending)
 
   return pending
 }
 
-async function readAndStore(programmeId: string): Promise<RuleReadResult> {
+async function readAndStore(
+  programmeId: string,
+  options: RuleReadOptions,
+): Promise<RuleReadResult> {
   const rows = await (async () => {
     try {
       return await db!
@@ -241,6 +263,40 @@ async function readAndStore(programmeId: string): Promise<RuleReadResult> {
     return { rule: { programmeId, status: 'no-source', rule: null, ...identity }, reason: null, cached: false }
   }
 
+  // Everything below could spend money, so every ceiling is applied here and
+  // nowhere earlier. A cache hit and a programme with no prose both return above
+  // this line and cost nothing.
+  if (ruleReadCoolingDown(programmeId)) {
+    return {
+      rule: null,
+      reason: 'session-limit',
+      detail: 'a recent read of this programme failed; retrying shortly',
+      cached: false,
+    }
+  }
+
+  const allowance = checkRuleReadAllowance(options.sessionId, programmeId)
+  if (!allowance.allowed) {
+    return {
+      rule: null,
+      reason: 'session-limit',
+      detail: `retry in ${Math.ceil(allowance.retryAfterMs / 1000)}s`,
+      cached: false,
+    }
+  }
+
+  const budget = await consumeRuleReadBudget()
+  if (!budget.allowed) {
+    return {
+      rule: null,
+      reason: 'budget-exhausted',
+      detail: `${budget.used} of ${budget.limit} daily reads used${
+        budget.reason === 'error' ? ' (budget counter unavailable)' : ''
+      }`,
+      cached: false,
+    }
+  }
+
   const read = await askModelForRule({
     programme: programme.name,
     institution: programme.institution,
@@ -255,6 +311,7 @@ async function readAndStore(programmeId: string): Promise<RuleReadResult> {
   // record that a student ever asked and got nothing, and without it the only
   // way to find out which courses fail is to guess at them one at a time.
   if (read.status === 'failed') {
+    noteRuleReadFailure(programmeId)
     console.warn(
       `[rules] could not read ${programme.name} (${programme.institution}) — ${read.reason}${
         read.detail ? `: ${read.detail}` : ''

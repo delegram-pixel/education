@@ -62,6 +62,10 @@ export function TicketThread({
 
       setConnecting(false)
 
+      // An empty reply means this session does not own the ticket, or the
+      // action was rate-limited. Neither is something to render into the thread.
+      if (!body) return
+
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         setMessages((current) => [
           ...current,

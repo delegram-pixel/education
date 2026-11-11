@@ -13,6 +13,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx lib/db/seed.ts",
+    "data:prune": "tsx scripts/prune-data.ts",
     "catalogue:prepare": "tsx scripts/prepare-ibass-catalogue.ts",
     "catalogue:sync": "tsx scripts/sync-ibass-catalogue.ts",
     "catalogue:status": "tsx scripts/catalogue-status.ts",

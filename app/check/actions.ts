@@ -3,6 +3,7 @@
 import { searchProgrammes } from '@/lib/db/discovery'
 import { checkEligibility } from '@/lib/eligibility/engine'
 import { findCheckTarget, saveCheck } from '@/lib/db/queries'
+import { limitAction } from '@/lib/action-limits'
 import { ensureSessionId } from '@/lib/session'
 import type { DiscoveryMatch } from '@/lib/discovery'
 import {
@@ -32,7 +33,19 @@ export type CheckState =
  * answer even if the database is unreachable; all they lose is the share link.
  */
 export async function runCheck(courseId: string, results: OLevelResult[]): Promise<CheckState> {
-  const target = await findCheckTarget(courseId)
+  const sessionId = await ensureSessionId()
+  const limit = limitAction('check', sessionId)
+  if (!limit.allowed) {
+    return {
+      status: 'error',
+      message: `That is a lot of checks in a short time. Try again in ${Math.max(
+        1,
+        Math.ceil(limit.retryAfterMs / 60_000),
+      )} minute${limit.retryAfterMs > 60_000 ? 's' : ''}.`,
+    }
+  }
+
+  const target = await findCheckTarget(courseId, { sessionId })
   if (!target) {
     return { status: 'error', message: 'We could not find that course. Please pick it again.' }
   }
@@ -48,7 +61,6 @@ export async function runCheck(courseId: string, results: OLevelResult[]): Promi
 
   const verdict = checkEligibility(target, parsed.data)
 
-  const sessionId = await ensureSessionId()
   const shareId = await saveCheck({ sessionId, courseId, results: parsed.data, verdict })
 
   return { status: 'done', verdict, courseId, shareId }
@@ -83,6 +95,15 @@ export type DiscoveryState =
  * no grades. The strongest thing it can offer is a link into the checker.
  */
 export async function discoverCourses(subjects: string[]): Promise<DiscoveryState> {
+  const sessionId = await ensureSessionId()
+  const limit = limitAction('discovery', sessionId)
+  if (!limit.allowed) {
+    return {
+      status: 'error',
+      message: 'That is a lot of searches in a short time. Please wait a moment and try again.',
+    }
+  }
+
   const known = new Set<string>(SUBJECT_CODES)
   const valid = subjects.filter((subject): subject is SubjectCode => known.has(subject))
   const unique = SUBJECT_CODES.filter((code) => valid.includes(code))

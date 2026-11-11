@@ -49,6 +49,8 @@ yarn install
 ## Environment variables
 This project supports local environment configuration through `.env.local`.
 
+A complete template lives in [`.env.example`](.env.example). Every value is optional; with no configuration at all the app serves the built-in sample catalogue.
+
 Create a `.env.local` file in the project root if you want to provide your own database settings:
 
 ```bash
@@ -78,6 +80,11 @@ GROQ_API_KEY=""
 # at all. The same rule as above applies — no NEXT_PUBLIC_ prefix, because
 # anything the browser can read is a key given away.
 CATALOGUE_API_KEYS=""
+
+# Hard ceiling on fresh eligibility-rule reads per UTC day, across every server
+# instance. This is the backstop that bounds model spend; per-session limits live
+# in the app and cannot bound a bill on their own. 0 disables fresh reads.
+GROQ_DAILY_CALL_LIMIT="200"
 ```
 
 Note: the app is designed to work without a database configured as well. If `DATABASE_URL` is missing, it falls back to static data in many flows.
@@ -138,6 +145,7 @@ yarn test
 yarn db:push
 yarn db:studio
 yarn db:seed
+yarn data:prune
 yarn catalogue:prepare
 yarn catalogue:sync
 yarn catalogue:status

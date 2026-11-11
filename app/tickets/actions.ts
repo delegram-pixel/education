@@ -3,7 +3,8 @@
 import { redirect } from 'next/navigation'
 
 import { addTicketMessage, createTicket, findTicket } from '@/lib/db/queries'
-import { ensureSessionId } from '@/lib/session'
+import { limitAction } from '@/lib/action-limits'
+import { ensureSessionId, getSessionId } from '@/lib/session'
 import { createTicketSchema, type TicketCategory } from '@/lib/types'
 
 export type TicketFormState = { error: string } | null
@@ -24,6 +25,11 @@ export async function submitTicket(
   }
 
   const sessionId = await ensureSessionId()
+  const limit = limitAction('ticket', sessionId)
+  if (!limit.allowed) {
+    return { error: 'You have sent several tickets in a short time. Please wait a moment.' }
+  }
+
   const id = await createTicket({ ...parsed.data, sessionId })
 
   redirect(`/tickets/${id}`)
@@ -61,7 +67,21 @@ const SCRIPTED_REPLIES: Record<TicketCategory, string> = {
 export async function simulateCounselorReply(
   ticketId: string,
 ): Promise<{ posted: boolean; body: string }> {
+  const sessionId = await getSessionId()
   const existing = await findTicket(ticketId)
+
+  // This is a Server Action like any other: the id arrives from the browser and
+  // cannot be trusted. A ticket that belongs to another session gets the same
+  // empty answer as one that does not exist, so the action cannot be used to
+  // probe for tickets either.
+  if (existing && (!sessionId || existing.ticket.sessionId !== sessionId)) {
+    return { posted: false, body: '' }
+  }
+
+  if (sessionId) {
+    const limit = limitAction('ticket-reply', sessionId)
+    if (!limit.allowed) return { posted: false, body: '' }
+  }
 
   const body =
     SCRIPTED_REPLIES[(existing?.ticket.category as TicketCategory) ?? 'other'] ??

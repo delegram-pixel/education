@@ -11,6 +11,7 @@ import { SAMPLE_INSTITUTION_DETAILS } from '@/lib/db/catalogue.data'
 import { listInstitutions } from '@/lib/db/catalogue'
 import { findCheckTarget, listCourses } from '@/lib/db/queries'
 import { reviewedInstitutionKeys, withReviewedInstitutions } from '@/lib/institutions'
+import { getSessionId } from '@/lib/session'
 import { listSubjects } from '@/lib/types'
 
 export const metadata: Metadata = {
@@ -25,7 +26,9 @@ export default async function CheckPage({
   searchParams: Promise<{ course?: string }>
 }) {
   const { course: courseId } = await searchParams
-  const course = courseId ? await findCheckTarget(courseId) : null
+  const course = courseId
+    ? await findCheckTarget(courseId, { sessionId: await getSessionId() })
+    : null
 
   if (course) {
     return (

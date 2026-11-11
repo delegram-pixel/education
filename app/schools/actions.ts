@@ -2,6 +2,8 @@
 
 import { listProgrammesForInstitution } from '@/lib/db/catalogue'
 import { readRule } from '@/lib/db/rules'
+import { limitAction } from '@/lib/action-limits'
+import { ensureSessionId } from '@/lib/session'
 import type { ProgrammeRuleStatus } from '@/lib/types'
 
 /** One row of a school's programme list, reduced to what the card renders. */
@@ -39,6 +41,12 @@ export async function loadInstitutionProgrammes(
 ): Promise<InstitutionProgrammesState> {
   const trimmed = name.trim()
   if (!trimmed) return { status: 'error', message: 'Pick a school first.' }
+
+  const sessionId = await ensureSessionId()
+  const limit = limitAction('institution-programmes', sessionId)
+  if (!limit.allowed) {
+    return { status: 'error', message: 'That is a lot of schools in a short time. Please wait a moment.' }
+  }
 
   const { programmes, source } = await listProgrammesForInstitution(trimmed)
 
@@ -88,7 +96,8 @@ export async function readCourseRule(programmeId: string): Promise<CourseRuleSta
   // course slug, a hand-typed string — has no brochure row to read.
   if (!id.includes(':')) return { status: 'unavailable' }
 
-  const { rule } = await readRule(id)
+  const sessionId = await ensureSessionId()
+  const { rule } = await readRule(id, { sessionId })
 
   return rule?.rule ? { status: 'ready' } : { status: 'unavailable' }
 }

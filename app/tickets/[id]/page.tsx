@@ -1,18 +1,37 @@
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 
 import { TicketThread } from '@/components/tickets/ticket-thread'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { dbConfigured } from '@/lib/db'
 import { findTicket } from '@/lib/db/queries'
+import { getSessionId } from '@/lib/session'
 import { TICKET_CATEGORY_LABELS, type TicketCategory } from '@/lib/types'
 
-export const metadata: Metadata = { title: 'Your ticket' }
+export const metadata: Metadata = {
+  title: 'Your ticket',
+  // A ticket is a private conversation. It is never a search result.
+  robots: { index: false },
+}
 
 export default async function TicketPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const found = await findTicket(id)
+
+  // Ticket ids are short enough to read aloud, which also makes them guessable.
+  // The id alone is therefore not authorisation: the ticket has to belong to the
+  // session reading it. A missing row is a 404 when a database is configured; if
+  // there is no database, the "not saved" shell below is the honest state for the
+  // id the student was just shown.
+  if (found) {
+    const sessionId = await getSessionId()
+    if (!sessionId || found.ticket.sessionId !== sessionId) notFound()
+  } else if (dbConfigured) {
+    notFound()
+  }
 
   // A ticket that could not be persisted still has an ID the student was
   // shown, so the thread is rendered either way. Losing the record is not a

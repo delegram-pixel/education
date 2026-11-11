@@ -1,6 +1,7 @@
 'use server'
 
 import { savePersonaResult } from '@/lib/db/queries'
+import { limitAction } from '@/lib/action-limits'
 import { ensureSessionId } from '@/lib/session'
 import type { PersonaProfile } from '@/lib/types'
 
@@ -17,5 +18,8 @@ export async function savePersona(input: {
   alignmentByCourse: Record<string, number>
 }): Promise<void> {
   const sessionId = await ensureSessionId()
+  const limit = limitAction('persona', sessionId)
+  if (!limit.allowed) return
+
   await savePersonaResult({ sessionId, ...input })
 }
